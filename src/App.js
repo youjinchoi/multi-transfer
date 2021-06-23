@@ -95,7 +95,7 @@ function App() {
   }, []);
 
   const onConnect = async () => {
-    if (!accounts) {
+    if (!accounts?.length) {
       await window.ethereum.send('eth_requestAccounts');
     }
   }
@@ -110,7 +110,7 @@ function App() {
             </Typography>
           </Box>
           <Box justifyContent="flex-end">
-            <Button variant="contained" size="small" disableRipple onClick={onConnect}>{accounts ? accounts[0] : "Connect"}</Button>
+            <Button variant="contained" size="small" disableRipple onClick={onConnect}>{accounts?.length ? accounts[0] : "Connect"}</Button>
           </Box>
         </Box>
       </AppBar>
