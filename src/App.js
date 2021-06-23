@@ -96,7 +96,10 @@ function App() {
 
   const onConnect = async () => {
     if (!accounts?.length) {
-      await window.ethereum.send('eth_requestAccounts');
+      const response = await window.ethereum.send('eth_requestAccounts');
+      if (response?.result) {
+        setAccounts(response.result);
+      }
     }
   }
 
