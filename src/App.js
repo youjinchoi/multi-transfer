@@ -76,18 +76,17 @@ function App() {
   const classes = useStyles();
   const [web3, setWeb3] = useState(null);
   const [accounts, setAccounts] = useState(null);
-  const [networkId, setNetworkId] = useState(null);
+  // const [networkId, setNetworkId] = useState(null);
 
   useEffect(() => {
     const init = async () => {
       try {
         const web3 = await getWeb3();
         const accounts = await web3.eth.getAccounts();
-        const networkId = await web3.eth.net.getId();
-        console.log(web3, accounts, networkId);
+        // const networkId = await web3.eth.net.getId();
         setWeb3(web3);
         setAccounts(accounts);
-        setNetworkId(networkId);
+        // setNetworkId(networkId);
       } catch (error) {
         console.error(error);
       }
