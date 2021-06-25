@@ -28,11 +28,11 @@ const StyledTableRow = withStyles((theme) => ({
 
 const useStyles = makeStyles({
   table: {
-    width: 700,
+    width: 612,
   },
 });
 
-function TransferApprove({ web3, recipientInfo }) {
+function TransferApprove({ recipientInfo }) {
   const classes = useStyles();
 
   if (!recipientInfo) {
@@ -51,7 +51,7 @@ function TransferApprove({ web3, recipientInfo }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {recipientInfo.map(([address, amount]) => (
+              {recipientInfo.map(({ address, amount }) => (
                 <StyledTableRow key={address}>
                   <StyledTableCell>{address}</StyledTableCell>
                   <StyledTableCell>{amount}</StyledTableCell>

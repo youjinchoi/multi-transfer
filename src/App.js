@@ -117,7 +117,7 @@ function App() {
           </Box>
         </Box>
       </AppBar>
-      <Transfer web3={web3} />
+      <Transfer web3={web3} account={accounts?.length ? accounts[0] : null} />
     </div>
   );
 }
