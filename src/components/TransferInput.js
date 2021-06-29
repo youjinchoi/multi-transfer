@@ -16,19 +16,21 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
+import TablePagination from "@material-ui/core/TablePagination";
+import TableContainer from "@material-ui/core/TableContainer";
 
 const defaultProps = {
   bgcolor: 'background.paper',
   borderColor: 'rgba(0, 0, 0, 0.38)',
-  m: 1,
   border: 1,
   style: { width: '612px', height: '200px' },
 };
 
-function TransferInput({ web3, tokenInfo, setTokenInfo, setRecipientInfo, setActiveStep }) {
+function TransferInput({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
-  const [validInputs, setValidInputs] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const handleCloseToast = () => {
     setToast(null);
@@ -109,6 +111,11 @@ function TransferInput({ web3, tokenInfo, setTokenInfo, setRecipientInfo, setAct
       setTokenInfo({ isValid: false, errorMessage: "Please input the token address" });
       return;
     }
+
+    if (!tokenInfo.isValid) {
+      return;
+    }
+
     if (!validInputs?.length) {
       return;
     }
@@ -116,6 +123,17 @@ function TransferInput({ web3, tokenInfo, setTokenInfo, setRecipientInfo, setAct
     setRecipientInfo(recipientInfo);
     setActiveStep(1);
   }
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const emptyRows = rowsPerPage - Math.min(rowsPerPage, validInputs?.length - page * rowsPerPage);
 
   return (
     <>
@@ -139,7 +157,7 @@ function TransferInput({ web3, tokenInfo, setTokenInfo, setRecipientInfo, setAct
           {toast?.message}
         </MuiAlert>
       </Snackbar>
-      {invalidInputs?.length && (
+      {!!invalidInputs?.length && (
         <Dialog onClose={handleClose} open={!!invalidInputs?.length} fullWidth={true} maxWidth="md">
           <DialogTitle id="customized-dialog-title" onClose={handleClose}>
             Invalid inputs below will be ignored
@@ -165,23 +183,41 @@ function TransferInput({ web3, tokenInfo, setTokenInfo, setRecipientInfo, setAct
         </Dialog>
       )}
       {!!validInputs?.length && (
-        <Box display="flex" alignItems="center" flexDirection="column" m={2}>
+        <Box display="flex" alignItems="center" flexDirection="column" m={1}>
           <Box display="flex" justifyContent="space-between" style={{ width: "612px"}}>
             <Typography>Imported lines</Typography>
             <Button variant="contained" onClick={() => setValidInputs(null)}>
               Discard
             </Button>
           </Box>
-          <Table size="small" style={{ width: "612px"}}>
-            <TableBody>
-              {validInputs.map(({lineNumber, line}) => (
-                <TableRow key={lineNumber}>
-                  <TableCell>{`line ${lineNumber}`}</TableCell>
-                  <TableCell>{line.join(",")}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div>
+          <TableContainer>
+            <Table size="small" style={{ width: "612px"}}>
+              <TableBody>
+                {validInputs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(({lineNumber, line}) => (
+                  <TableRow key={lineNumber}>
+                    <TableCell>{`line ${lineNumber}`}</TableCell>
+                    <TableCell>{line.join(",")}</TableCell>
+                  </TableRow>
+                ))}
+                {!!emptyRows && page > 0 && [ ...Array(emptyRows).keys()].map(item => (
+                  <TableRow key={`empty${item}`} style={{ height: 33 }}>
+                    <TableCell colSpan={2} />
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[10, 15, 100]}
+            component="div"
+            count={validInputs.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onChangePage={handleChangePage}
+            onChangeRowsPerPage={handleChangeRowsPerPage}
+          />
+          </div>
         </Box>
       )}
       <Box m={1}>

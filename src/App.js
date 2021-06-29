@@ -83,7 +83,9 @@ function App() {
       try {
         const web3 = await getWeb3();
         const accounts = await web3.eth.getAccounts();
-        // const networkId = await web3.eth.net.getId();
+        const networkId = await web3.eth.net.getId();
+        window.__networkId__ = networkId;
+        console.log(networkId);
         setWeb3(web3);
         setAccounts(accounts);
         // setNetworkId(networkId);
@@ -91,8 +93,10 @@ function App() {
         console.error(error);
       }
     }
-    init();
-  }, []);
+    if (!web3) {
+      init();
+    }
+  });
 
   const onConnect = async () => {
     if (!accounts?.length) {
@@ -109,7 +113,7 @@ function App() {
         <Box display="flex" justifyContent="space-between" m={1}>
           <Box justifyContent="flex-start">
             <Typography className={classes.title} variant="h6" noWrap>
-              SHITCOINS
+              TokenTools
             </Typography>
           </Box>
           <Box justifyContent="flex-end">

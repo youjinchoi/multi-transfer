@@ -2,15 +2,26 @@
   "name": "multi-transfer",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "start": "node_modules/.bin/react-scripts start",
+    "build": "node_modules/.bin/react-scripts build",
+    "test": "node_modules/.bin/react-scripts test",
+    "eject": "node_modules/.bin/react-scripts eject",
+    "deploy:local": "truffle migrate --network local",
+    "deploy:testnet": "truffle migrate --network testnet",
+    "verify:testnet": "truffle run verify TransparentUpgradeableProxy --network testnet"
+  },
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.58",
+    "@openzeppelin/contracts": "^4.1.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "axios": "^0.21.1",
     "csv": "^5.5.0",
+    "lodash": "^4.17.21",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-dropzone": "^11.3.2",
@@ -18,12 +29,6 @@
     "web-vitals": "^1.0.1",
     "web3": "^1.3.6",
     "web3-utils": "^1.3.6"
-  },
-  "scripts": {
-    "start": "node_modules/.bin/react-scripts start",
-    "build": "node_modules/.bin/react-scripts build",
-    "test": "node_modules/.bin/react-scripts test",
-    "eject": "node_modules/.bin/react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -42,5 +47,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@openzeppelin/truffle-upgrades": "^1.7.1",
+    "@truffle/hdwallet-provider": "^1.4.1",
+    "truffle-plugin-verify": "^0.5.9"
   }
 }
