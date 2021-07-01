@@ -26,7 +26,7 @@ const defaultProps = {
   style: { width: '612px', height: '200px' },
 };
 
-function TransferInput({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
+function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
   const [page, setPage] = useState(0);
@@ -234,4 +234,4 @@ function TransferInput({web3, tokenInfo, setTokenInfo, validInputs, setValidInpu
   );
 }
 
-export default TransferInput;
+export default CsvInfo;

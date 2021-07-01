@@ -11,15 +11,15 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "totalAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
           "internalType": "address",
           "name": "tokenAddress",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalAmount",
+          "type": "uint256"
         }
       ],
       "name": "MultiTransfer",
@@ -41,11 +41,6 @@
           "internalType": "uint256[]",
           "name": "_amounts",
           "type": "uint256[]"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_total",
-          "type": "uint256"
         }
       ],
       "name": "multiTransferToken",

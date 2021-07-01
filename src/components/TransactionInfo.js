@@ -1,15 +1,6 @@
 import React, { useState, useEffect} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Box from '@material-ui/core/Box';
-import Button from "@material-ui/core/Button";
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-import Link from '@material-ui/core/Link';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Box, Button, CircularProgress, Step, StepLabel, Stepper, StepContent, Typography, Link } from '@material-ui/core';
 import Check from '@material-ui/icons/Check';
 import chunk from "lodash/chunk";
 import MultiTransferer from "../abis/MultiTransferer.json";
@@ -30,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const steps = ['Approve token', 'Confirm batch transfers', 'Wait for the transactions to be finished'];
+const steps = ['Approve token', 'Execute multi transfers'];
 
 const useQontoStepIconStyles = makeStyles({
   root: {
@@ -55,7 +46,7 @@ const useQontoStepIconStyles = makeStyles({
   },
 });
 
-const QontoStepIcon = (props) => {
+const TransactionStepIcon = (props) => {
   const classes = useQontoStepIconStyles();
   const { active, completed } = props;
 
@@ -68,18 +59,16 @@ const QontoStepIcon = (props) => {
   );
 }
 
-const multiTransfererAddress = "0xdfE3AaA9475F0e65C6A09ED04537F46D1836426F";
+const multiTransfererAddress = "0xb6d28133Abebe1F3C93e9D364502F1A98878A65d";
 
-function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveStep: setGlobalActiveStep, transactionCount, totalAmount, handleTransactionCountChange, transferPerTransaction }) {
+function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveStep: setGlobalActiveStep, transactionCount, totalAmount, transferPerTransaction }) {
   const classes = useStyles();
   const [activeStep, setActiveStep] = useState(0);
+  const [isEnoughAllowances, setIsEnoughAllowances] = useState(false);
   const [approvalTransactionHash, setApprovalTransactionHash] = useState(null);
-  const [transferTransactionHashes, setTransferTransactionHashes] = useState({});
   const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] = useState(null);
-
-  const handleReset = () => {
-    setGlobalActiveStep(0);
-  };
+  const [transferTransactionHashes, setTransferTransactionHashes] = useState({});
+  const [transferTransactionErrorMessages, setTransferTransactionErrorMessages] = useState([]);
 
   const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
   const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
@@ -88,17 +77,17 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
 
   useEffect(() => {
     if (activeStep === 1) {
-      if (Object.keys(transferTransactionHashes).length === transactionCount) {
+      const statuses = Object.values(transferTransactionHashes);
+      if (statuses.length === transactionCount && statuses.every(status => status === "finish")) {
         setActiveStep(2);
-      }
-    } else if (activeStep === 2) {
-      console.log(transferTransactionHashes);
-      if (!Object.values(transferTransactionHashes).every(status => status === "finish")) {
+        setGlobalActiveStep(3);
+        /*
         Object.keys(transferTransactionHashes).forEach(transactionHash => {
           web3.eth.getTransactionReceipt(transactionHash, (error, res) => {
             console.log(res);
           })
         })
+        */
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,24 +95,25 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
 
   useEffect(() => {
     const approveToken = async () => {
-      try {
-        const allowance = await tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call();
-        // console.log(allowance, totalAmountBN.toString(), totalAmountWithDecimalsBN.toString());
-        if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
-          // console.log("enough allowances");
-          setActiveStep(1);
-          return;
-        }
-      } catch {}
+      const allowance = await tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call();
+      if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
+        setIsEnoughAllowances(true);
+        setActiveStep(1);
+        return;
+      }
 
       try {
-        const response = await tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
-          .send({ from: account });
-        // console.log(response);
-        if (response?.status) {
-          setApprovalTransactionHash(response?.transactionHash);
-          setActiveStep(1);
-        }
+        tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
+          .send({ from: account })
+          .on('transactionHash', hash => {
+            setApprovalTransactionHash(hash);
+          })
+          .then(response => {
+            if (response?.status) {
+              setApprovalTransactionHash(response?.transactionHash);
+              setActiveStep(1);
+            }
+          });
       } catch (error) {
         setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
         console.error(error);
@@ -133,6 +123,8 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
     const multiTransfer = async () => {
       const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
       const chunks = chunk(recipientInfo, transferPerTransaction);
+      let tempTransactionHashes = {};
+      const tempTransactionErrorMessages = [];
       chunks.forEach(async chunk => {
         const addresses = [];
         const amounts = [];
@@ -142,25 +134,37 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
           amounts.push(amountBN.mul(multiplierBN).toString());
         })
 
-        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts, totalAmountWithDecimalsBN.toString()).encodeABI({from: account});
+        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({from: account});
         const gas = await web3.eth.estimateGas({
           from: account,
           data: encodedData,
-          to: multiTransfererAddress
+          to: multiTransfererAddress,
         });
+
         console.log('gas', gas);
 
-        const promise = multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts, totalAmountWithDecimalsBN.toString())
-          .send({ from: account })
-          .on('transactionHash', hash => {
-            // console.log("transactionHash", hash);
-            setTransferTransactionHashes({...transactionCount, [hash]: "panding"})
-          }).then(result => {
-            if (result?.status && result?.transactionHash) {
-              setTransferTransactionHashes({...transactionCount, [result?.transactionHash]: "finish"})
-            }
-          });
-        console.log(promise);
+        try {
+          multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts)
+            .send({ from: account })
+            .on('transactionHash', hash => {
+              tempTransactionHashes = {...tempTransactionHashes, [hash]: "pending" };
+              setTransferTransactionHashes(tempTransactionHashes);
+            })
+            .on('error', (error) => {
+              tempTransactionErrorMessages.push(error?.message ?? "failed to multi transfer");
+              setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
+            })
+            .then(result => {
+              if (result?.status && result?.transactionHash) {
+                tempTransactionHashes = {...tempTransactionHashes, [result?.transactionHash]: "finish" };
+                setTransferTransactionHashes(tempTransactionHashes);
+              }
+            });
+        } catch (error) {
+          tempTransactionErrorMessages.push(error?.message ?? "failed to multi transfer");
+          setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
+          console.error(error);
+        }
       });
     }
     switch (activeStep) {
@@ -169,8 +173,6 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
         break;
       case 1:
         multiTransfer();
-        break;
-      case 2:
         break;
       default:
         break;
@@ -181,6 +183,8 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
   const getError = index => {
     if (index === 0) {
       return !!tokenApprovalErrorMessage;
+    } else if (index === 1) {
+      return transferTransactionErrorMessages.length === transactionCount;
     }
     return false;
   };
@@ -193,6 +197,12 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
             {tokenApprovalErrorMessage}
           </Typography>
         );
+      } else if (isEnoughAllowances) {
+        return (
+          <Typography variant="caption">
+            Already have enough allowances
+          </Typography>
+        );
       } else if (!!approvalTransactionHash) {
         return (
           <Typography variant="caption">
@@ -200,7 +210,18 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
           </Typography>
         );
       }
-    } else if (index === 2) {
+    } else if (index === 1) {
+      if (transferTransactionErrorMessages.length === transactionCount) {
+        return (
+          <Box display="flex" flexDirection="column">
+            {transferTransactionErrorMessages.map(message => (
+              <Typography variant="caption" color="error">
+                {message}
+              </Typography>
+            ))}
+          </Box>
+        );
+      }
       return (
         <Box display="flex" flexDirection="column">
           {Object.entries(transferTransactionHashes).map(([transactionHash, status]) => (
@@ -214,8 +235,6 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
     return null;
   };
 
-  // console.log(approvalTransactionHash);
-
   return (
     <Box className={classes.root} display="flex" flexDirection="column" alignItems="center">
       <Box style={{ width: "612px" }}>
@@ -225,7 +244,7 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
               <StepLabel
                 error={getError(index)}
                 optional={getOptional(index)}
-                StepIconComponent={QontoStepIcon}
+                StepIconComponent={TransactionStepIcon}
               >
                 {label}
               </StepLabel>
@@ -233,29 +252,24 @@ function TransferConfirm({ web3, account, tokenInfo, recipientInfo, setActiveSte
             </Step>
           ))}
         </Stepper>
-        {activeStep === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>All steps completed</Typography>
-            <Button onClick={handleReset}>
-              Reset
-            </Button>
-          </Paper>
+        {activeStep < 2 && (
+          <Box display="flex" justifyContent="center">
+            <Box m={1}>
+              <Button
+                onClick={() => setGlobalActiveStep(1)}
+                disabled={!!Object.keys(transferTransactionHashes)?.length}
+              >
+                Back
+              </Button>
+              <Button variant="contained" color="primary" disabled>
+                Next
+              </Button>
+            </Box>
+          </Box>
         )}
-      </Box>
-      <Box display="flex" justifyContent="center">
-        <Box m={1}>
-          <Button
-            onClick={() => setGlobalActiveStep(1)}
-          >
-            Back
-          </Button>
-          <Button variant="contained" color="primary" disabled>
-            Next
-          </Button>
-        </Box>
       </Box>
     </Box>
   );
 }
 
-export default TransferConfirm;
+export default TransactionInfo;

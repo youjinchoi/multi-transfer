@@ -335,15 +335,14 @@ library SafeERC20 {
 contract MultiTransferer {
   using SafeERC20 for IERC20;
 
-  event MultiTransfer(uint256 totalAmount, address tokenAddress);
+  event MultiTransfer(address tokenAddress, uint256 totalAmount);
 
   constructor () {}
 
   function multiTransferToken(
     address _token,
     address[] calldata _recipients,
-    uint256[] calldata _amounts,
-    uint256 _total
+    uint256[] calldata _amounts
   ) external payable returns(address[] memory failedRecipients) {
     require(_recipients.length > 0, "no recipients sent");
     require(
@@ -353,26 +352,23 @@ contract MultiTransferer {
 
     failedRecipients = new address[](_recipients.length);
     IERC20 token = IERC20(_token);
-    token.safeTransferFrom(msg.sender, address(this), _total);
 
-    uint256 change = 0;
+    uint256 successAmount = 0;
     for (uint256 i = 0; i < _recipients.length; i++) {
       address recipient = _recipients[i];
       uint256 amount = _amounts[i];
       (bool success, ) = _token.call(
         abi.encodeWithSelector(
-          token.transfer.selector, recipient, amount
+          token.transferFrom.selector, msg.sender, recipient, amount
         )
       );
-      if (!success) {
-        change += amount;
+      if (success) {
+        successAmount += amount;
+      } else {
         failedRecipients[i] = recipient;
       }
     }
-    if (change != 0) {
-      token.safeTransfer(msg.sender, change);
-    }
-    emit MultiTransfer(change == 0 ? _total : _total - change, _token);
+    emit MultiTransfer(_token, successAmount);
     return failedRecipients;
   }
 }
