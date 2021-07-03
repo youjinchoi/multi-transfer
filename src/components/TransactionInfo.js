@@ -1,9 +1,10 @@
 import React, { useState, useEffect} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Box, Button, CircularProgress, Step, StepLabel, Stepper, StepContent, Typography, Link } from '@material-ui/core';
-import Check from '@material-ui/icons/Check';
+import { Check, Error } from '@material-ui/icons';
 import chunk from "lodash/chunk";
 import MultiTransferer from "../abis/MultiTransferer.json";
+import { getTransactionUrl } from "../urls";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -23,15 +24,12 @@ const useStyles = makeStyles((theme) => ({
 
 const steps = ['Approve token', 'Execute multi transfers'];
 
-const useQontoStepIconStyles = makeStyles({
+const useStepIconStyles = makeStyles({
   root: {
     color: '#eaeaf0',
     display: 'flex',
     height: 22,
     alignItems: 'center',
-  },
-  active: {
-    color: '#784af4',
   },
   circle: {
     width: 8,
@@ -47,19 +45,27 @@ const useQontoStepIconStyles = makeStyles({
 });
 
 const TransactionStepIcon = (props) => {
-  const classes = useQontoStepIconStyles();
-  const { active, completed } = props;
+  const classes = useStepIconStyles();
+  const { active, completed, error } = props;
+
+  const getIcon = () => {
+    if (completed) {
+      return <Check className={classes.completed} />;
+    } else if (active) {
+      return error ? <Error color="error" /> : <CircularProgress style={{ width: 18, height: 18 }} />;
+    } else {
+      return <div className={classes.circle} style={{ marginLeft: 6 }} />;
+    }
+  }
 
   return (
     <Box display="flex" alignItems="center" style={{ height: 22, paddingLeft: 3 }}>
-      {completed &&  <Check className={classes.completed} />}
-      {active && <CircularProgress style={{ width: 18, height: 18 }}/>}
-      {!completed && !active && <div className={classes.circle} style={{ marginLeft: 6 }} />}
+      {getIcon()}
     </Box>
   );
 }
 
-const multiTransfererAddress = "0xb6d28133Abebe1F3C93e9D364502F1A98878A65d";
+const deadAddress = "0x0000000000000000000000000000000000000000";
 
 function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveStep: setGlobalActiveStep, transactionCount, totalAmount, transferPerTransaction }) {
   const classes = useStyles();
@@ -94,6 +100,7 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
   }, [activeStep, transactionCount, transferTransactionHashes]);
 
   useEffect(() => {
+    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
     const approveToken = async () => {
       const allowance = await tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call();
       if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
@@ -134,14 +141,21 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
           amounts.push(amountBN.mul(multiplierBN).toString());
         })
 
-        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({from: account});
-        const gas = await web3.eth.estimateGas({
-          from: account,
-          data: encodedData,
-          to: multiTransfererAddress,
-        });
+        try {
+          const gasResult = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).estimateGas({from: account});
+          console.log('gas', gasResult);
+        } catch (error) {
+          tempTransactionErrorMessages.push(error?.message ?? "gas estimation error");
+          setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
+          console.error(error);
+          return;
+        }
 
-        console.log('gas', gas);
+        const failedAddresses = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).call({from: account});
+        const filteredFailedAddresses = failedAddresses.filter(address => address !== deadAddress);
+        if (filteredFailedAddresses?.length) {
+          console.warn("found failed addresses", filteredFailedAddresses);
+        }
 
         try {
           multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts)
@@ -155,6 +169,7 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
               setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
             })
             .then(result => {
+              console.log("transaction finisih", result);
               if (result?.status && result?.transactionHash) {
                 tempTransactionHashes = {...tempTransactionHashes, [result?.transactionHash]: "finish" };
                 setTransferTransactionHashes(tempTransactionHashes);
@@ -206,7 +221,7 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
       } else if (!!approvalTransactionHash) {
         return (
           <Typography variant="caption">
-            <Link href={`https://testnet.bscscan.com/tx/${approvalTransactionHash}`} target="_blank">{approvalTransactionHash}</Link>
+            <Link href={getTransactionUrl(approvalTransactionHash)} target="_blank">{approvalTransactionHash}</Link>
           </Typography>
         );
       }
@@ -214,8 +229,8 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
       if (transferTransactionErrorMessages.length === transactionCount) {
         return (
           <Box display="flex" flexDirection="column">
-            {transferTransactionErrorMessages.map(message => (
-              <Typography variant="caption" color="error">
+            {transferTransactionErrorMessages.map((message, index) => (
+              <Typography key={index} variant="caption" color="error">
                 {message}
               </Typography>
             ))}
@@ -226,7 +241,7 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
         <Box display="flex" flexDirection="column">
           {Object.entries(transferTransactionHashes).map(([transactionHash, status]) => (
             <Typography variant="caption">
-              <Link href={`https://testnet.bscscan.com/tx/${transactionHash}`} target="_blank">{transactionHash}</Link>
+              <Link href={getTransactionUrl(transactionHash)} target="_blank">{transactionHash}</Link>
             </Typography>
           ))}
         </Box>

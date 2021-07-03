@@ -1,5 +1,9 @@
 {
   "contractName": "MultiTransferer",
+  "addresses": {
+    "97": "0xb6d28133Abebe1F3C93e9D364502F1A98878A65d",
+    "56": "0x1e3a4592850e2C7FcdB701D0a30b47887a8e0632"
+  },
   "abi": [
     {
       "inputs": [],
