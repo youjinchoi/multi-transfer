@@ -2,80 +2,27 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import AppBar from '@material-ui/core/AppBar';
 import Typography from '@material-ui/core/Typography';
-import { fade, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Transfer from './components/Transfer';
 import getWeb3 from './getWeb3';
 
-const useStyles = makeStyles((theme) => ({
-  grow: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
+const useStyles = makeStyles(() => ({
   title: {
-    display: 'none',
-    [theme.breakpoints.up('sm')]: {
-      display: 'block',
-    },
+    display: 'block',
   },
-  search: {
-    position: 'relative',
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor: fade(theme.palette.common.white, 0.15),
-    '&:hover': {
-      backgroundColor: fade(theme.palette.common.white, 0.25),
-    },
-    marginRight: theme.spacing(2),
-    marginLeft: 0,
-    width: '100%',
-    [theme.breakpoints.up('sm')]: {
-      marginLeft: theme.spacing(3),
-      width: 'auto',
-    },
-  },
-  searchIcon: {
-    padding: theme.spacing(0, 2),
-    height: '100%',
-    position: 'absolute',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputRoot: {
-    color: 'inherit',
-  },
-  inputInput: {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-  sectionDesktop: {
-    display: 'none',
-    [theme.breakpoints.up('md')]: {
-      display: 'flex',
-    },
-  },
-  sectionMobile: {
-    display: 'flex',
-    [theme.breakpoints.up('md')]: {
-      display: 'none',
-    },
-  },
+  connectButton: {
+    borderRadius: 15,
+    textTransform: "unset",
+    minWidth: 100,
+  }
 }));
 
 function App() {
   const classes = useStyles();
   const [web3, setWeb3] = useState(null);
-  const [accounts, setAccounts] = useState(null);
+  const [account, setAccount] = useState(null);
   // const [networkId, setNetworkId] = useState(null);
 
   useEffect(() => {
@@ -86,8 +33,12 @@ function App() {
         const networkId = await web3.eth.net.getId();
         window.__networkId__ = networkId;
         setWeb3(web3);
-        setAccounts(accounts);
+        setAccount(accounts[0]);
         // setNetworkId(networkId);
+        setInterval(async () => {
+          const newAccounts = await web3.eth.getAccounts();
+          setAccount(newAccounts[0]);
+        }, 1000);
       } catch (error) {
         console.error(error);
       }
@@ -98,10 +49,10 @@ function App() {
   });
 
   const onConnect = async () => {
-    if (!accounts?.length) {
+    if (!account) {
       const response = await window.ethereum.send('eth_requestAccounts');
       if (response?.result) {
-        setAccounts(response.result);
+        setAccount(response.result[0]);
       }
     }
   }
@@ -116,11 +67,11 @@ function App() {
             </Typography>
           </Box>
           <Box justifyContent="flex-end">
-            <Button variant="contained" size="small" disableRipple onClick={onConnect}>{accounts?.length ? accounts[0] : "Connect"}</Button>
+            <Button variant="contained" size="small" disableRipple className={classes.connectButton} onClick={onConnect}>{account ? account : "Connect"}</Button>
           </Box>
         </Box>
       </AppBar>
-      <Transfer web3={web3} account={accounts?.length ? accounts[0] : null} />
+      <Transfer web3={web3} account={account} />
     </div>
   );
 }

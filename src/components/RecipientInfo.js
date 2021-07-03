@@ -49,7 +49,7 @@ function RecipientInfo({ recipientInfo, setActiveStep }) {
   return (
     <Box display="flex" alignItems="center" flexDirection="column">
       <Box m={1}>
-        <TableContainer>
+        <TableContainer style={{ borderRadius: 4 }}>
           <Table className={classes.table} stickyHeader size="small">
             <TableHead>
               <TableRow>

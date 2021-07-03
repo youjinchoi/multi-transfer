@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Box, CircularProgress, TextField } from '@material-ui/core';
+import { Box, CircularProgress } from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
+import CustomTextField from "./CustomTextField";
 
 function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +45,7 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
   return (
     <Box>
       <Box display="flex" justifyContent="center" m={1}>
-        <TextField
+        <CustomTextField
           required
           error={tokenInfo?.isValid === false}
           helperText={tokenInfo?.errorMessage}
@@ -64,17 +65,17 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
         <>
           <Box display="flex" justifyContent="center">
             <Box m={1}>
-              <TextField label="Name" variant="outlined" value={tokenInfo.name} disabled m={1} />
+              <CustomTextField label="Name" variant="outlined" value={tokenInfo.name} disabled m={1} />
             </Box>
             <Box m={1}>
-              <TextField label="Symbol" variant="outlined" value={tokenInfo.symbol} disabled m={1} />
+              <CustomTextField label="Symbol" variant="outlined" value={tokenInfo.symbol} disabled m={1} />
             </Box>
             <Box m={1}>
-              <TextField label="Decimals" variant="outlined" value={tokenInfo.decimals} disabled m={1} />
+              <CustomTextField label="Decimals" variant="outlined" value={tokenInfo.decimals} disabled m={1} />
             </Box>
           </Box>
           <Box display="flex" justifyContent="center" m={1}>
-            <TextField
+            <CustomTextField
               label="Token Balance of Connected Wallet"
               variant="outlined"
               value={tokenInfo.balance}

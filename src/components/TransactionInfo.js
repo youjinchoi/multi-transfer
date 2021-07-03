@@ -115,6 +115,10 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
           .on('transactionHash', hash => {
             setApprovalTransactionHash(hash);
           })
+          .on('error', (error) => {
+            setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
+            console.error(error)
+          })
           .then(response => {
             if (response?.status) {
               setApprovalTransactionHash(response?.transactionHash);

@@ -18,6 +18,7 @@ import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableContainer from "@material-ui/core/TableContainer";
+import { makeStyles } from '@material-ui/core/styles';
 
 const defaultProps = {
   bgcolor: 'background.paper',
@@ -26,7 +27,14 @@ const defaultProps = {
   style: { width: '612px', height: '200px' },
 };
 
+const useStyles = makeStyles(() => ({
+  fileUpload: {
+    cursor: 'pointer',
+  },
+}));
+
 function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
+  const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
   const [page, setPage] = useState(0);
@@ -141,7 +149,7 @@ function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, se
         <Box display="flex" justifyContent="center">
           <Dropzone onDrop={onFileDrop}>
             {({getRootProps, getInputProps}) => (
-              <Box borderRadius={4} {...defaultProps} display="flex" flexDirection="row" justifyContent="center" alignItems="center">
+              <Box borderRadius={4} {...defaultProps} display="flex" flexDirection="row" justifyContent="center" alignItems="center" className={classes.fileUpload}>
                 <div {...getRootProps()}>
                   <input {...getInputProps()} accept=".csv" />
                   <p>Drag 'n' drop csv files here, or click to select files</p>
