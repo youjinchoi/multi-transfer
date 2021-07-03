@@ -83,7 +83,8 @@ function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, se
     const validFiles = [];
     const invalidFiles = [];
     acceptedFiles.forEach(file => {
-      if (file.type === "text/csv") {
+      console.log("file type", file.type);
+      if (file.type.endsWith("csv")) {
         validFiles.push(file);
       } else {
         invalidFiles.push(file);
