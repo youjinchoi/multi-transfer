@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import { Box, Button, TablePagination, TableRow, TableHead, TableContainer, TableCell, TableBody, Table } from '@material-ui/core';
+import MultiTransferer from "../abis/MultiTransferer.json";
 
 const StyledTableCell = withStyles((theme) => ({
   head: {
@@ -26,10 +27,56 @@ const useStyles = makeStyles({
   },
 });
 
-function RecipientInfo({ recipientInfo, setActiveStep }) {
+function RecipientInfo({ web3, account, recipientInfo, setActiveStep, tokenInfo, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [isEnoughAllowances, setIsEnoughAllowances] = useState(false);
+  // const [approvalTransactionHash, setApprovalTransactionHash] = useState(null);
+  // const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] = useState(null);
+
+  useEffect(() => {
+    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call()
+      .then(allowance => {
+        // console.log("allowance", allowance);
+        if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
+          setIsEnoughAllowances(true);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const approveTokenAndProceed = () => {
+    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
+      .send({ from: account })
+      .on('transactionHash', hash => {
+        // setApprovalTransactionHash(hash);
+      })
+      .on('error', (error) => {
+        // setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
+        console.error(error)
+      })
+      .then(response => {
+        if (response?.status) {
+          setIsEnoughAllowances(true);
+          // setApprovalTransactionHash(response?.transactionHash);
+          setActiveStep(2);
+        }
+      });
+  }
+
+  const handleNext = () => {
+    if (isEnoughAllowances) {
+      setActiveStep(2);
+    } else {
+      approveTokenAndProceed();
+    }
+  }
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -85,8 +132,8 @@ function RecipientInfo({ recipientInfo, setActiveStep }) {
       <div>
         <Box m={1}>
           <Button onClick={() => setActiveStep(0)}>Back</Button>
-          <Button variant="contained" color="primary" onClick={() => setActiveStep(2)}>
-            Next
+          <Button variant="contained" color="primary" onClick={handleNext} disabled={tokenInfo?.notEnoughBalance}>
+            {isEnoughAllowances ? "Next" : "Approve"}
           </Button>
         </Box>
       </div>

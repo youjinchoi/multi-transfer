@@ -1,23 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Box } from '@material-ui/core';
 import CustomTextField from './CustomTextField';
 
-function TransferInfo({ activeStep, recipientInfo, transactionCount, setTransactionCount, totalAmount }) {
-  const handleTransactionCountChange = (e) => {
-    const value = e?.target?.value;
-    const count = Number(value);
-    if (!count || count < 1 || count > recipientInfo?.length) {
-      return;
-    }
-    setTransactionCount(count);
-  }
-
-  const transferPerTransaction = useMemo(() => {
-    const value = Math.floor(recipientInfo?.length / transactionCount);
-    const mod = recipientInfo?.length % transactionCount;
-    return mod === 0 ? value : value + 1;
-  }, [recipientInfo, transactionCount]);
-
+function TransferInfo({ recipientInfo, totalAmount }) {
   return (
     <Box display="flex" justifyContent="center">
       <Box m={1}>
@@ -34,17 +19,6 @@ function TransferInfo({ activeStep, recipientInfo, transactionCount, setTransact
           disabled
           value={totalAmount}
           style={{ width: "194px" }}
-        />
-      </Box>
-      <Box m={1}>
-        <CustomTextField
-          label="Total Transaction Count"
-          disabled={activeStep > 1}
-          value={transactionCount}
-          onChange={handleTransactionCountChange}
-          type="number"
-          style={{ width: "194px" }}
-          helperText={`max ${transferPerTransaction} transfers per transaction`}
         />
       </Box>
     </Box>

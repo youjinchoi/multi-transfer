@@ -1,10 +1,11 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Button, CircularProgress, Step, StepLabel, Stepper, StepContent, Typography, Link } from '@material-ui/core';
-import { Check, Error } from '@material-ui/icons';
+import { Box, Button } from '@material-ui/core';
 import chunk from "lodash/chunk";
+import sum from "lodash/sum";
 import MultiTransferer from "../abis/MultiTransferer.json";
-import { getTransactionUrl } from "../urls";
+import SingleTransactionInfo from "./SingleTransactionInfo";
+import CustomTextField from "./CustomTextField";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -22,270 +23,145 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const steps = ['Approve token', 'Execute multi transfers'];
-
-const useStepIconStyles = makeStyles({
-  root: {
-    color: '#eaeaf0',
-    display: 'flex',
-    height: 22,
-    alignItems: 'center',
-  },
-  circle: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    backgroundColor: 'currentColor',
-  },
-  completed: {
-    color: '#784af4',
-    zIndex: 1,
-    fontSize: 18,
-  },
-});
-
-const TransactionStepIcon = (props) => {
-  const classes = useStepIconStyles();
-  const { active, completed, error } = props;
-
-  const getIcon = () => {
-    if (completed) {
-      return <Check className={classes.completed} />;
-    } else if (active) {
-      return error ? <Error color="error" /> : <CircularProgress style={{ width: 18, height: 18 }} />;
-    } else {
-      return <div className={classes.circle} style={{ marginLeft: 6 }} />;
-    }
-  }
-
-  return (
-    <Box display="flex" alignItems="center" style={{ height: 22, paddingLeft: 3 }}>
-      {getIcon()}
-    </Box>
-  );
-}
-
-const deadAddress = "0x0000000000000000000000000000000000000000";
-
-function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveStep: setGlobalActiveStep, transactionCount, totalAmount, transferPerTransaction }) {
+function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveStep: setGlobalActiveStep, transactionCount, setTransactionCount, totalAmountWithDecimalsBN, transferPerTransaction }) {
   const classes = useStyles();
-  const [activeStep, setActiveStep] = useState(0);
-  const [isEnoughAllowances, setIsEnoughAllowances] = useState(false);
-  const [approvalTransactionHash, setApprovalTransactionHash] = useState(null);
-  const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] = useState(null);
-  const [transferTransactionHashes, setTransferTransactionHashes] = useState({});
-  const [transferTransactionErrorMessages, setTransferTransactionErrorMessages] = useState([]);
+  const [recipientChunks, setRecipientChunks] = useState([]);
+  const [gasPrice, setGasPrice] = useState(null);
+  const [estimatedGasAmounts, setEstimatedGasAmounts] = useState([]);
+  const [finishedTransactionCount, setFinishedTransactionCount] = useState(0);
+  const [startTransfer, setStartTransfer] = useState(false);
 
   const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
   const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
-  const totalAmountBN = new web3.utils.BN(totalAmount);
-  const totalAmountWithDecimalsBN = totalAmountBN.mul(multiplierBN);
-
-  useEffect(() => {
-    if (activeStep === 1) {
-      const statuses = Object.values(transferTransactionHashes);
-      if (statuses.length === transactionCount && statuses.every(status => status === "finish")) {
-        setActiveStep(2);
-        setGlobalActiveStep(3);
-        /*
-        Object.keys(transferTransactionHashes).forEach(transactionHash => {
-          web3.eth.getTransactionReceipt(transactionHash, (error, res) => {
-            console.log(res);
-          })
-        })
-        */
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStep, transactionCount, transferTransactionHashes]);
 
   useEffect(() => {
     const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
-    const approveToken = async () => {
-      const allowance = await tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call();
-      if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
-        setIsEnoughAllowances(true);
-        setActiveStep(1);
-        return;
-      }
+    const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+    const getGasFee = async () => {
+      const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, [multiTransfererAddress], [multiplierBN.toString()]).encodeABI({
+        from: account
+      })
+      const gasPriceResult = await web3.eth.getGasPrice();
+      console.log("gasPrice", gasPriceResult);
+      setGasPrice(gasPriceResult);
+      const gasResult = await web3.eth.estimateGas({
+        from: account,
+        data: encodedData,
+        gasPrice: gasPrice,
+        to: multiTransfererAddress,
+      })
 
-      try {
-        tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
-          .send({ from: account })
-          .on('transactionHash', hash => {
-            setApprovalTransactionHash(hash);
-          })
-          .on('error', (error) => {
-            setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
-            console.error(error)
-          })
-          .then(response => {
-            if (response?.status) {
-              setApprovalTransactionHash(response?.transactionHash);
-              setActiveStep(1);
-            }
-          });
-      } catch (error) {
-        setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
-        console.error(error);
-      }
-    };
-
-    const multiTransfer = async () => {
-      const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
-      const chunks = chunk(recipientInfo, transferPerTransaction);
-      let tempTransactionHashes = {};
-      const tempTransactionErrorMessages = [];
-      chunks.forEach(async chunk => {
-        const addresses = [];
-        const amounts = [];
-        chunk.forEach(({ address, amount }) => {
-          addresses.push(address);
-          const amountBN = new web3.utils.BN(amount);
-          amounts.push(amountBN.mul(multiplierBN).toString());
-        })
-
-        try {
-          const gasResult = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).estimateGas({from: account});
-          console.log('gas', gasResult);
-        } catch (error) {
-          tempTransactionErrorMessages.push(error?.message ?? "gas estimation error");
-          setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
-          console.error(error);
-          return;
-        }
-
-        const failedAddresses = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).call({from: account});
-        const filteredFailedAddresses = failedAddresses.filter(address => address !== deadAddress);
-        if (filteredFailedAddresses?.length) {
-          console.warn("found failed addresses", filteredFailedAddresses);
-        }
-
-        try {
-          multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts)
-            .send({ from: account })
-            .on('transactionHash', hash => {
-              tempTransactionHashes = {...tempTransactionHashes, [hash]: "pending" };
-              setTransferTransactionHashes(tempTransactionHashes);
-            })
-            .on('error', (error) => {
-              tempTransactionErrorMessages.push(error?.message ?? "failed to multi transfer");
-              setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
-            })
-            .then(result => {
-              console.log("transaction finisih", result);
-              if (result?.status && result?.transactionHash) {
-                tempTransactionHashes = {...tempTransactionHashes, [result?.transactionHash]: "finish" };
-                setTransferTransactionHashes(tempTransactionHashes);
-              }
-            });
-        } catch (error) {
-          tempTransactionErrorMessages.push(error?.message ?? "failed to multi transfer");
-          setTransferTransactionErrorMessages([...tempTransactionErrorMessages]);
-          console.error(error);
-        }
-      });
+      const estimatedTransferPerTransaction = Math.round(25000000 / gasResult);
+      const value = Math.floor(recipientInfo?.length / estimatedTransferPerTransaction);
+      const mod = recipientInfo?.length % estimatedTransferPerTransaction;
+      const estimatedTransactionCount = mod === 0 ? value : value + 1;
+      console.log("estimated transaction count", estimatedTransactionCount);
+      console.log("gasResult", gasResult);
+      setTransactionCount(estimatedTransactionCount);
+      setRecipientChunks(chunk(recipientInfo, estimatedTransferPerTransaction));
     }
-    switch (activeStep) {
-      case 0:
-        approveToken();
-        break;
-      case 1:
-        multiTransfer();
-        break;
-      default:
-        break;
-    }
+
+    getGasFee();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStep]);
+  }, []);
 
-  const getError = index => {
-    if (index === 0) {
-      return !!tokenApprovalErrorMessage;
-    } else if (index === 1) {
-      return transferTransactionErrorMessages.length === transactionCount;
+  const estimatedCost = useMemo(() => {
+    console.log("estimatedGasAmounts", estimatedGasAmounts);
+    if (estimatedGasAmounts.length !== recipientChunks.length || !gasPrice) {
+      return null;
     }
-    return false;
-  };
 
-  const getOptional = index => {
-    if (index === 0) {
-      if (!!tokenApprovalErrorMessage) {
-        return (
-          <Typography variant="caption" color="error">
-            {tokenApprovalErrorMessage}
-          </Typography>
-        );
-      } else if (isEnoughAllowances) {
-        return (
-          <Typography variant="caption">
-            Already have enough allowances
-          </Typography>
-        );
-      } else if (!!approvalTransactionHash) {
-        return (
-          <Typography variant="caption">
-            <Link href={getTransactionUrl(approvalTransactionHash)} target="_blank">{approvalTransactionHash}</Link>
-          </Typography>
-        );
-      }
-    } else if (index === 1) {
-      if (transferTransactionErrorMessages.length === transactionCount) {
-        return (
-          <Box display="flex" flexDirection="column">
-            {transferTransactionErrorMessages.map((message, index) => (
-              <Typography key={index} variant="caption" color="error">
-                {message}
-              </Typography>
-            ))}
-          </Box>
-        );
-      }
-      return (
-        <Box display="flex" flexDirection="column">
-          {Object.entries(transferTransactionHashes).map(([transactionHash, status]) => (
-            <Typography variant="caption">
-              <Link href={getTransactionUrl(transactionHash)} target="_blank">{transactionHash}</Link>
-            </Typography>
-          ))}
-        </Box>
-      );
+    const totalGas = sum(estimatedGasAmounts);
+    return gasPrice / 1000000000000000000 * totalGas;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estimatedGasAmounts, gasPrice]);
+
+  console.log("estimatedCost", estimatedCost);
+
+  const addEstimatedGasAmount = amount => {
+    if (!amount) {
+      return;
     }
-    return null;
-  };
+    console.log("addEstimatedGasAmount", estimatedGasAmounts, amount);
+    setEstimatedGasAmounts([...estimatedGasAmounts, amount]);
+  }
+
+  const increaseFinishedTransactionCount = () => setFinishedTransactionCount(finishedTransactionCount + 1);
+
+  const proceedTransfer = () => setStartTransfer(true);
+
+  console.log("finishedTransactionCount", finishedTransactionCount);
 
   return (
     <Box className={classes.root} display="flex" flexDirection="column" alignItems="center">
-      <Box style={{ width: "612px" }}>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel
-                error={getError(index)}
-                optional={getOptional(index)}
-                StepIconComponent={TransactionStepIcon}
-              >
-                {label}
-              </StepLabel>
-              <StepContent />
-            </Step>
-          ))}
-        </Stepper>
-        {activeStep < 2 && (
-          <Box display="flex" justifyContent="center">
-            <Box m={1}>
-              <Button
-                onClick={() => setGlobalActiveStep(1)}
-                disabled={!!Object.keys(transferTransactionHashes)?.length}
-              >
-                Back
-              </Button>
-              <Button variant="contained" color="primary" disabled>
-                Next
-              </Button>
-            </Box>
+      <Box display="flex" justifyContent="center">
+        <Box m={1}>
+          <CustomTextField
+            label="Total Transaction Count"
+            disabled
+            value={transactionCount ? transactionCount : "calculating..."}
+            style={{ width: "194px" }}
+          />
+        </Box>
+        <Box m={1}>
+          <CustomTextField
+            label="Gas Price(Gwei)"
+            disabled
+            value={gasPrice ? (gasPrice / 1000000000) : "loading..."}
+            style={{ width: "194px" }}
+          />
+        </Box>
+        <Box m={1}>
+          <CustomTextField
+            label="Estimated BNB Cost"
+            disabled
+            value={estimatedCost ? estimatedCost.toFixed(6) : "calculating..."}
+            style={{ width: "194px" }}
+          />
+        </Box>
+      </Box>
+      <Box style={{ width: "612px" }} m={2}>
+        {!!recipientChunks.length && recipientChunks.map((chunk, index) => (
+            <SingleTransactionInfo
+              key={index}
+              index={index}
+              web3={web3}
+              account={account}
+              tokenInfo={tokenInfo}
+              recipientInfo={chunk}
+              gasPrice={gasPrice}
+              addEstimatedGasAmount={addEstimatedGasAmount}
+              increaseFinishedTransactionCount={increaseFinishedTransactionCount}
+              startTransfer={startTransfer}
+            />
+          )
+        )}
+        {finishedTransactionCount === recipientChunks?.length && (
+          <Box m={2}>
+            All transactions successfully finished!
           </Box>
         )}
+        <Box display="flex" justifyContent="center" m={2}>
+          <Box m={1}>
+            {finishedTransactionCount === recipientChunks?.length ? (
+              <Button variant="contained" color="primary" onClick={() => window.location.reload()}>
+                Reset
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={() => setGlobalActiveStep(1)}
+                  disabled={false}
+                >
+                  Back
+                </Button>
+                <Button variant="contained" color="primary" onClick={proceedTransfer} disabled={startTransfer || !estimatedCost}>
+                  Transfer
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

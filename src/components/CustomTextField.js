@@ -6,16 +6,29 @@ const CustomTextField = withStyles({
     '& label.Mui-disabled': {
       color: 'green',
     },
+    '& label.Mui-error': {
+      color: 'red !important',
+    },
     '& .Mui-disabled': {
       '& input': {
         color: 'black',
       },
       '& fieldset': {
-        borderColor: 'green !important',
+        borderColor: 'green',
         color: 'green',
       },
       '&.MuiInput-underline:before': {
         borderBottomColor: 'green',
+        borderBottomStyle: 'solid',
+      },
+    },
+    '& .Mui-error': {
+      '& fieldset': {
+        borderColor: 'red !important',
+        color: 'red !important',
+      },
+      '&.MuiInput-underline:before': {
+        borderBottomColor: 'red !important',
         borderBottomStyle: 'solid',
       },
     },

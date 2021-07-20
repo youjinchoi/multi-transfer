@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import CsvInfo from './CsvInfo';
 import TransactionInfo from './TransactionInfo';
@@ -30,19 +30,36 @@ function Transfer({ web3, account }) {
   const [tokenInfo, setTokenInfo] = useState(null);
   const [validInputs, setValidInputs] = useState(null);
   const [recipientInfo, setRecipientInfo] = useState(null);
-  const [transactionCount, setTransactionCount] = useState(1);
+  const [transactionCount, setTransactionCount] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(null);
+  const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] = useState(null);
   const steps = getSteps();
 
-  const totalAmount = useMemo(() => recipientInfo?.reduce(
-    (acc, val) => (acc + Number(val.amount)), 0
-    )
-    , [recipientInfo]);
+  useEffect(() => {
+    if (!web3) {
+      return;
+    }
 
-  const transferPerTransaction = useMemo(() => {
-    const value = Math.floor(recipientInfo?.length / transactionCount);
-    const mod = recipientInfo?.length % transactionCount;
-    return mod === 0 ? value : value + 1;
-  }, [recipientInfo, transactionCount]);
+    if (!recipientInfo?.length) {
+      setTotalAmount(null);
+      setTotalAmountWithDecimalsBN(null);
+    }
+    const totalAmount = recipientInfo?.reduce(
+      (acc, val) => (acc + Number(val.amount)), 0
+    );
+    setTotalAmount(totalAmount);
+
+    if (!tokenInfo?.decimals) {
+      return;
+    }
+
+    const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
+    const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
+    const totalAmountBN = new web3.utils.BN(totalAmount);
+    const totalAmountWithDecimalsBN = totalAmountBN.mul(multiplierBN);
+    setTotalAmountWithDecimalsBN(totalAmountWithDecimalsBN);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipientInfo, tokenInfo?.decimals]);
 
   return (
     <div className={classes.root}>
@@ -63,6 +80,7 @@ function Transfer({ web3, account }) {
             activeStep={activeStep}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
+            totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
           />
           <Box display="flex" justifyContent="center" m={1}>
             <Box my={2} style={{ width: "612px" }}>
@@ -71,11 +89,8 @@ function Transfer({ web3, account }) {
           </Box>
           {activeStep > 0 && (
             <TransferInfo
-              activeStep={activeStep}
               recipientInfo={recipientInfo}
               totalAmount={totalAmount}
-              transactionCount={transactionCount}
-              setTransactionCount={setTransactionCount}
             />
           )}
           {activeStep === 0 && (
@@ -93,10 +108,13 @@ function Transfer({ web3, account }) {
           {activeStep === 1 && (
             <RecipientInfo
               web3={web3}
+              account={account}
               recipientInfo={recipientInfo}
               setActiveStep={setActiveStep}
               transactionCount={transactionCount}
               totalAmount={totalAmount}
+              totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
+              tokenInfo={tokenInfo}
             />
           )}
           {activeStep > 1 && (
@@ -107,8 +125,9 @@ function Transfer({ web3, account }) {
               recipientInfo={recipientInfo}
               setActiveStep={setActiveStep}
               transactionCount={transactionCount}
+              setTransactionCount={setTransactionCount}
               totalAmount={totalAmount}
-              transferPerTransaction={transferPerTransaction}
+              totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
             />
           )}
         </Box>

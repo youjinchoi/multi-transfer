@@ -63,7 +63,7 @@ function App() {
         <Box display="flex" justifyContent="space-between" m={1}>
           <Box justifyContent="flex-start">
             <Typography className={classes.title} variant="h6" noWrap>
-              TokenTool
+              TokenBlast
             </Typography>
           </Box>
           <Box justifyContent="flex-end">

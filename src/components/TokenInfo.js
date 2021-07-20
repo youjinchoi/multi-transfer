@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Box, CircularProgress } from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
 import CustomTextField from "./CustomTextField";
 
-function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
+function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const onTokenAddressChange = async (e) => {
@@ -30,17 +30,29 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
     const symbol = await contract.methods.symbol().call();
     const balance = account ? await contract.methods.balanceOf(account).call() : null;
     let adjustedBalance = null;
+    let balanceBN = null;
     if (balance) {
       const decimalsBN = new web3.utils.BN(decimals);
-      const balanceBN = new web3.utils.BN(balance);
+      balanceBN = new web3.utils.BN(balance);
       const divisor = new web3.utils.BN(10).pow(decimalsBN);
       const beforeDecimal = balanceBN.div(divisor);
       const afterDecimal  = balanceBN.mod(divisor);
       adjustedBalance = `${beforeDecimal.toString()}.${afterDecimal.toString()}`;
     }
-    setTokenInfo({ contract, address: value, name, symbol, decimals, balance: adjustedBalance, isValid: true });
+    setTokenInfo({ contract, address: value, name, symbol, decimals, balance: adjustedBalance, balanceBN, isValid: true });
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (!tokenInfo?.balanceBN || !totalAmountWithDecimalsBN) {
+      setTokenInfo({ ...tokenInfo, notEnoughBalance: false })
+      return;
+    }
+    if (tokenInfo?.balanceBN.lte(totalAmountWithDecimalsBN)) {
+      setTokenInfo({ ...tokenInfo, notEnoughBalance: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokenInfo?.balanceBN, totalAmountWithDecimalsBN]);
 
   return (
     <Box>
@@ -80,6 +92,8 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo }) {
               variant="outlined"
               value={tokenInfo.balance}
               disabled
+              error={tokenInfo?.notEnoughBalance}
+              helperText={tokenInfo?.notEnoughBalance ? "token balance is less than total amount to transfer" : null}
               style={{ width: "612px" }}
             />
           </Box>
