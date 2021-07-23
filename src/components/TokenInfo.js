@@ -1,10 +1,50 @@
 import React, {useEffect, useState} from 'react';
-import { Box, CircularProgress } from '@material-ui/core';
+import {Box, CircularProgress, Typography} from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
 import CustomTextField from "./CustomTextField";
+import {makeStyles} from "@material-ui/core/styles";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import search from "../assets/search.png";
+
+const useStyles = makeStyles((theme) => ({
+  label: {
+    color: "#FFFFFF",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  tokenAddress: {
+    background: "#F9FAFB",
+    border: "0.6px solid #E5E7EB",
+    borderRadius: 15,
+    root: {
+
+    },
+  },
+  button: {
+    background: "#EC008C",
+  }
+}));
+
+const useStylesInput = makeStyles((theme) => ({
+  root: {
+    padding: 10,
+    height: 50,
+    border: "0.6px solid #E5E7EB",
+    borderRadius: 15,
+    background: "#F9FAFB",
+  },
+  'input': {
+    '&::placeholder': {
+      color: '#00636C',
+      opacity: 1,
+    }
+  }
+}));
 
 function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
+  const classes = useStyles();
+  const inputClasses = useStylesInput();
   const [isLoading, setIsLoading] = useState(false);
 
   const onTokenAddressChange = async (e) => {
@@ -56,16 +96,23 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
 
   return (
     <Box>
-      <Box display="flex" justifyContent="center" m={1}>
+      <Box display="flex" justifyContent="center" m={1} flexDirection="column">
+        <Box display="flex" justifyContent="flex-start">
+          <Typography className={classes.label}>Token Address</Typography>
+        </Box>
         <CustomTextField
-          required
-          error={tokenInfo?.isValid === false}
-          helperText={tokenInfo?.errorMessage}
-          label="Token Address"
-          variant="outlined"
           onChange={onTokenAddressChange}
           disabled={activeStep !== 0}
-          style={{ width: "612px" }}
+          InputProps={{
+            classes: inputClasses,
+            startAdornment: (
+              <InputAdornment position="start">
+                <img src={search} width={30} height={30} alt="search icon" />
+              </InputAdornment>
+            ),
+            disableUnderline: true,
+            placeholder: "Input your Token Address",
+          }}
         />
       </Box>
       {isLoading && (
@@ -75,21 +122,31 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
       )}
       {!!tokenInfo && tokenInfo.isValid && (
         <>
-          <Box display="flex" justifyContent="center">
-            <Box m={1}>
-              <CustomTextField label="Name" variant="outlined" value={tokenInfo.name} disabled m={1} />
+          <Box display="flex" justifyContent="space-between" p={1}>
+            <Box>
+              <Box display="flex" justifyContent="flex-start">
+                <Typography className={classes.label}>Name</Typography>
+              </Box>
+              <CustomTextField value={tokenInfo.name} disabled m={1} />
             </Box>
-            <Box m={1}>
-              <CustomTextField label="Symbol" variant="outlined" value={tokenInfo.symbol} disabled m={1} />
+            <Box>
+              <Box display="flex" justifyContent="flex-start">
+                <Typography className={classes.label}>Symbol</Typography>
+              </Box>
+              <CustomTextField value={tokenInfo.symbol} disabled m={1} />
             </Box>
-            <Box m={1}>
-              <CustomTextField label="Decimals" variant="outlined" value={tokenInfo.decimals} disabled m={1} />
+            <Box>
+              <Box display="flex" justifyContent="flex-start">
+                <Typography className={classes.label}>Decimals</Typography>
+              </Box>
+              <CustomTextField value={tokenInfo.decimals} disabled m={1} />
             </Box>
           </Box>
-          <Box display="flex" justifyContent="center" m={1}>
+          <Box display="flex" justifyContent="center" flexDirection="column" m={1}>
+            <Box display="flex" justifyContent="flex-start">
+              <Typography className={classes.label}>Token Balance of Connected Wallet</Typography>
+            </Box>
             <CustomTextField
-              label="Token Balance of Connected Wallet"
-              variant="outlined"
               value={tokenInfo.balance}
               disabled
               error={tokenInfo?.notEnoughBalance}

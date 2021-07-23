@@ -1,21 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import AppBar from '@material-ui/core/AppBar';
-import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Transfer from './components/Transfer';
 import getWeb3 from './getWeb3';
+import covac_log_white from './assets/covac_logo_white.png';
 
 const useStyles = makeStyles(() => ({
+  header: {
+    backgroundColor: "transparent",
+    height: 80,
+    display: "flex",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 40,
+    boxShadow: "none",
+    borderBottom: "2px solid #C1F4F7",
+  },
   title: {
     display: 'block',
   },
   connectButton: {
-    borderRadius: 15,
+    backgroundColor: "#27689E",
+    borderRadius: 20,
     textTransform: "unset",
     minWidth: 100,
+    color: "#FFFFFF",
+    height: 40,
   }
 }));
 
@@ -59,17 +72,9 @@ function App() {
 
   return (
     <div className="App">
-      <AppBar position="static">
-        <Box display="flex" justifyContent="space-between" m={1}>
-          <Box justifyContent="flex-start">
-            <Typography className={classes.title} variant="h6" noWrap>
-              TokenBlast
-            </Typography>
-          </Box>
-          <Box justifyContent="flex-end">
-            <Button variant="contained" size="small" disableRipple className={classes.connectButton} onClick={onConnect}>{account ? account : "Connect"}</Button>
-          </Box>
-        </Box>
+      <AppBar position="static" className={classes.header}>
+        <img src={covac_log_white} height={30} alt="covac logo" />
+        <Button variant="contained" size="small" disableRipple className={classes.connectButton} onClick={onConnect}>{account ? account : "Connect"}</Button>
       </AppBar>
       <Transfer web3={web3} account={account} />
     </div>

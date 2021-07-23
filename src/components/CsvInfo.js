@@ -31,9 +31,21 @@ const useStyles = makeStyles(() => ({
   fileUpload: {
     cursor: 'pointer',
   },
+  label: {
+    color: "#FFFFFF",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  button: {
+    background: "#EC008C",
+    height: 50,
+    borderRadius: 25,
+    minWidth: 150,
+    fontSize: 18,
+  }
 }));
 
-function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
+function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
@@ -147,7 +159,10 @@ function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, se
   return (
     <>
       {!invalidInputs?.length && !validInputs?.length && (
-        <Box display="flex" justifyContent="center">
+        <Box display="flex" justifyContent="center" flexDirection="column" p={1}>
+          <Box display="flex" justifyContent="flex-start">
+            <Typography className={classes.label}>List of Addresses in CSV</Typography>
+          </Box>
           <Dropzone onDrop={onFileDrop}>
             {({getRootProps, getInputProps}) => (
               <Box borderRadius={4} {...defaultProps} display="flex" flexDirection="row" justifyContent="center" alignItems="center" className={classes.fileUpload}>
@@ -229,13 +244,8 @@ function CsvInfo({web3, tokenInfo, setTokenInfo, validInputs, setValidInputs, se
           </div>
         </Box>
       )}
-      <Box m={1}>
-        <Button
-          disabled
-        >
-          Back
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleNext}>
+      <Box m={4}>
+        <Button variant="contained" color="primary" onClick={handleNext} className={classes.button}>
           Next
         </Button>
       </Box>

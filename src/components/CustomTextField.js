@@ -1,38 +1,36 @@
 import TextField from '@material-ui/core/TextField';
-import { withStyles } from '@material-ui/core/styles';
+import makeStyles from "@material-ui/core/styles/makeStyles";
+import React from "react";
 
-const CustomTextField = withStyles({
+const useStyles = makeStyles((theme) => ({
   root: {
-    '& label.Mui-disabled': {
-      color: 'green',
-    },
-    '& label.Mui-error': {
-      color: 'red !important',
-    },
-    '& .Mui-disabled': {
-      '& input': {
-        color: 'black',
-      },
-      '& fieldset': {
-        borderColor: 'green',
-        color: 'green',
-      },
-      '&.MuiInput-underline:before': {
-        borderBottomColor: 'green',
-        borderBottomStyle: 'solid',
-      },
-    },
-    '& .Mui-error': {
-      '& fieldset': {
-        borderColor: 'red !important',
-        color: 'red !important',
-      },
-      '&.MuiInput-underline:before': {
-        borderBottomColor: 'red !important',
-        borderBottomStyle: 'solid',
-      },
-    },
+    padding: 10,
+    height: 50,
+    border: "0.6px solid #E5E7EB",
+    borderRadius: 15,
+    background: "#F9FAFB",
+    color: '#00636C',
   },
-})(TextField);
+  'input': {
+    '&::placeholder': {
+      color: '#00636C',
+      opacity: 1,
+    }
+  }
+}));
+
+function CustomTextField(props) {
+  const classes = useStyles();
+
+  return (
+    <TextField
+      InputProps={{
+        classes,
+        disableUnderline: true,
+      }}
+      {...props}
+    />
+  );
+}
 
 export default CustomTextField;

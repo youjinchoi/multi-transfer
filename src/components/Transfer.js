@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import CsvInfo from './CsvInfo';
 import TransactionInfo from './TransactionInfo';
-import { Box, Button, Divider, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
+import { Box, Button, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
 import RecipientInfo from "./RecipientInfo";
@@ -18,11 +18,21 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(1),
     marginBottom: theme.spacing(1),
   },
+  stepper: {
+    backgroundColor: "transparent",
+  },
+  stepLabel: {
+    color: "#FFFFFF",
+  },
+  welcomeMessage: {
+    color: "#FFFFFF",
+  },
+  button: {
+    background: "#EC008C",
+  }
 }));
 
-function getSteps() {
-  return ['Input transfer details', 'Review', 'Transfer'];
-}
+const steps = ['Input transfer details', 'Review', 'Transfer'];
 
 function Transfer({ web3, account }) {
   const classes = useStyles();
@@ -33,7 +43,6 @@ function Transfer({ web3, account }) {
   const [transactionCount, setTransactionCount] = useState(null);
   const [totalAmount, setTotalAmount] = useState(null);
   const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] = useState(null);
-  const steps = getSteps();
 
   useEffect(() => {
     if (!web3) {
@@ -62,15 +71,16 @@ function Transfer({ web3, account }) {
   }, [recipientInfo, tokenInfo?.decimals]);
 
   return (
-    <div className={classes.root}>
-      <Box display="flex" justifyContent="center" m={1}>
-        <Stepper activeStep={activeStep} alternativeLabel style={{ width: "612px" }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1}>
+      <Stepper activeStep={activeStep} alternativeLabel style={{ width: "612px" }} className={classes.stepper}>
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel><span className={classes.stepLabel}>{label}</span></StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+      <Box m={2}>
+        <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>Token Blast</strong></Typography>
       </Box>
       <div>
         <Box>
@@ -82,11 +92,6 @@ function Transfer({ web3, account }) {
             setTokenInfo={setTokenInfo}
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
           />
-          <Box display="flex" justifyContent="center" m={1}>
-            <Box my={2} style={{ width: "612px" }}>
-              <Divider />
-            </Box>
-          </Box>
           {activeStep > 0 && (
             <TransferInfo
               recipientInfo={recipientInfo}
@@ -134,11 +139,11 @@ function Transfer({ web3, account }) {
         {activeStep === steps.length && (
           <div>
             <Typography className={classes.instructions}>All steps completed!</Typography>
-            <Button onClick={() => window.location.reload()} variant="contained" color="primary">Reset</Button>
+            <Button onClick={() => window.location.reload()} variant="contained" className={classes.button}>Reset</Button>
           </div>
         )}
       </div>
-    </div>
+    </Box>
   );
 }
 
