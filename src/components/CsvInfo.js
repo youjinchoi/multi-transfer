@@ -1,35 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@material-ui/core/Box';
-import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
-import Dropzone from 'react-dropzone';
 import Web3Utils from "web3-utils";
 import csv from 'csv';
 import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
-import {Typography} from "@material-ui/core";
+import { Typography } from "@material-ui/core";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
-import TablePagination from "@material-ui/core/TablePagination";
-import TableContainer from "@material-ui/core/TableContainer";
 import { makeStyles } from '@material-ui/core/styles';
-
-const defaultProps = {
-  bgcolor: 'background.paper',
-  borderColor: 'rgba(0, 0, 0, 0.38)',
-  border: 1,
-  style: { width: '612px', height: '200px' },
-};
+import CustomButton from "./CustomButton";
+import { UnControlled as CodeMirror } from 'react-codemirror2'
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/keymap/sublime';
+import 'codemirror/theme/monokai.css';
+import "codemirror/mode/xml/xml";
+import "codemirror/mode/javascript/javascript";
+import MultiTransferer from "../abis/MultiTransferer.json";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
     cursor: 'pointer',
+  },
+  container: {
+    width: 600,
   },
   label: {
     color: "#FFFFFF",
@@ -42,15 +43,29 @@ const useStyles = makeStyles(() => ({
     borderRadius: 25,
     minWidth: 150,
     fontSize: 18,
-  }
+  },
+  csvInput: {
+    display: "none",
+  },
+  wrapper: {
+    position: 'relative',
+  },
+  buttonProgress: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12,
+    color: "#FFFFFF",
+  },
 }));
 
-function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, setActiveStep }) {
+function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [editorValue, setEditorValue] = useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleCloseToast = () => {
     setToast(null);
@@ -91,11 +106,21 @@ function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setReci
     setValidInputs(validLines);
   }
 
-  const onFileDrop = (acceptedFiles) => {
+  useEffect(() => {
+    console.log("validInputs", validInputs);
+    if (!validInputs?.length) {
+      setEditorValue("");
+      return;
+    }
+    const lines = validInputs?.map(({ line }) => line.join(","));
+    setEditorValue(lines.join("\n"));
+  }, [validInputs]);
+
+  const onFileDrop = (event) => {
     const validFiles = [];
     const invalidFiles = [];
-    acceptedFiles.forEach(file => {
-      console.log(file);
+    console.log(event.target.files);
+    Array.from(event?.target?.files).forEach(file => {
       if (file.name.endsWith(".csv")) {
         validFiles.push(file);
       } else {
@@ -127,7 +152,7 @@ function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setReci
 
   const handleClose = () => setInvalidInputs(null);
 
-  const handleNext = () => {
+  const handleStep1ToStep2 = () => {
     if (!tokenInfo) {
       setTokenInfo({ isValid: false, errorMessage: "Please input the token address" });
       return;
@@ -145,37 +170,93 @@ function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setReci
     setActiveStep(1);
   }
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  const approveTokenAndProceed = () => {
+    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
+      .send({ from: account })
+      .on('transactionHash', hash => {
+        // setApprovalTransactionHash(hash);
+      })
+      .on('error', (error) => {
+        // setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
+        console.error(error);
+      })
+      .then(response => {
+        console.log("response", response);
+        if (response?.status) {
+          // setApprovalTransactionHash(response?.transactionHash);
+          setActiveStep(2);
+        }
+      });
+  }
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const handleStep2ToStep3 = () => {
+    setIsLoading(true);
+    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call()
+      .then(allowance => {
+        console.log("allowance", allowance);
+        if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
+          setActiveStep(2);
+        } else {
+          approveTokenAndProceed();
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
 
-  const emptyRows = rowsPerPage - Math.min(rowsPerPage, validInputs?.length - page * rowsPerPage);
+  const handleNext = () => {
+    if (activeStep === 0) {
+      handleStep1ToStep2();
+    } else if (activeStep === 1) {
+      handleStep2ToStep3();
+    }
+  }
+
+  const onCodeMirrorChange = (editor, data, value) => {
+    setEditorValue(value);
+  }
 
   return (
     <>
-      {!invalidInputs?.length && !validInputs?.length && (
-        <Box display="flex" justifyContent="center" flexDirection="column" p={1}>
-          <Box display="flex" justifyContent="flex-start">
-            <Typography className={classes.label}>List of Addresses in CSV</Typography>
-          </Box>
-          <Dropzone onDrop={onFileDrop}>
-            {({getRootProps, getInputProps}) => (
-              <Box borderRadius={4} {...defaultProps} display="flex" flexDirection="row" justifyContent="center" alignItems="center" className={classes.fileUpload}>
-                <div {...getRootProps()}>
-                  <input {...getInputProps()} accept=".csv" />
-                  <p>Drag 'n' drop csv files here, or click to select files</p>
-                  <CloudUploadIcon color="primary" style={{ fontSize: 50 }} />
-                </div>
-              </Box>
-            )}
-          </Dropzone>
+      <Box display="flex" justifyContent="center" flexDirection="column" p={1} className={classes.container} mb={2}>
+        <Box display="flex" justifyContent={(!!editorValue && activeStep === 0) ? "space-between" : "flex-start"}>
+          <Typography className={classes.label}>{activeStep === 0 ? "List of Addresses in CSV" : "Imported lines"}</Typography>
+          {(!!editorValue && activeStep === 0) && (
+            <CustomButton onClick={() => setValidInputs(null)}>
+              Discard
+            </CustomButton>
+          )}
         </Box>
-      )}
+        <CodeMirror
+          value={editorValue}
+          options={{
+            lineNumbers: true,
+            readOnly: activeStep === 1,
+          }}
+          onChange={onCodeMirrorChange}
+          className={classes.textarea}
+        />
+        {activeStep === 0 && (
+          <Box display="flex" justifyContent="flex-start" mt={4}>
+            <input
+              accept=".csv"
+              className={classes.csvInput}
+              id="csv-upload"
+              onChange={onFileDrop}
+              onClick={e => e.target.value = null}
+              type="file"
+            />
+            <label htmlFor="csv-upload">
+              <CustomButton variant="contained" color="primary" component="span">
+                Upload CSV file
+              </CustomButton>
+            </label>
+          </Box>
+        )}
+      </Box>
       <Snackbar open={toast?.isVisible} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
         <MuiAlert onClose={handleCloseToast} severity={toast?.severity}>
           {toast?.message}
@@ -206,48 +287,23 @@ function CsvInfo({ tokenInfo, setTokenInfo, validInputs, setValidInputs, setReci
           </DialogActions>
         </Dialog>
       )}
-      {!!validInputs?.length && (
-        <Box display="flex" alignItems="center" flexDirection="column" m={1}>
-          <Box display="flex" justifyContent="space-between" style={{ width: "612px"}}>
-            <Typography>Imported lines</Typography>
-            <Button variant="contained" onClick={() => setValidInputs(null)}>
-              Discard
-            </Button>
-          </Box>
-          <div>
-          <TableContainer>
-            <Table size="small" style={{ width: "612px"}}>
-              <TableBody>
-                {validInputs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(({lineNumber, line}) => (
-                  <TableRow key={lineNumber}>
-                    <TableCell>{`line ${lineNumber}`}</TableCell>
-                    <TableCell>{line.join(",")}</TableCell>
-                  </TableRow>
-                ))}
-                {!!emptyRows && page > 0 && [ ...Array(emptyRows).keys()].map(item => (
-                  <TableRow key={`empty${item}`} style={{ height: 33 }}>
-                    <TableCell colSpan={2} />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 15, 100]}
-            component="div"
-            count={validInputs.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
-          />
-          </div>
-        </Box>
-      )}
-      <Box m={4}>
-        <Button variant="contained" color="primary" onClick={handleNext} className={classes.button}>
-          Next
-        </Button>
+      <Box display="flex" justifyContent="center" mt={1}>
+        {activeStep === 1 && (
+          <CustomButton onClick={() => setActiveStep(0)}>
+            Back
+          </CustomButton>
+        )}
+        <div className={classes.wrapper}>
+          <CustomButton
+            variant="contained"
+            color="primary"
+            disabled={isLoading}
+            onClick={handleNext}
+          >
+            Next
+          </CustomButton>
+          {isLoading && <CircularProgress size={24} className={classes.buttonProgress} />}
+        </div>
       </Box>
     </>
   );

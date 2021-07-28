@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import CsvInfo from './CsvInfo';
 import TransactionInfo from './TransactionInfo';
-import { Box, Button, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
+import { Box, Button, Divider, Step, StepLabel, Stepper, StepConnector, Typography } from '@material-ui/core';
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
 import RecipientInfo from "./RecipientInfo";
+import withStyles from "@material-ui/core/styles/withStyles";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -20,22 +22,121 @@ const useStyles = makeStyles((theme) => ({
   },
   stepper: {
     backgroundColor: "transparent",
+    width: 615,
   },
   stepLabel: {
     color: "#FFFFFF",
+  },
+  stepLabelUnderline: {
+    width: 80,
+    height: 5,
+    backgroundColor: "#26CFDE",
   },
   welcomeMessage: {
     color: "#FFFFFF",
   },
   button: {
     background: "#EC008C",
-  }
+  },
+  divider: {
+    backgroundColor: "#C1F4F7",
+  },
 }));
+
+const CustomStepConnector = withStyles({
+  alternativeLabel: {
+    top: 13,
+    left: 'calc(-100% + 8px)',
+    right: 'calc(0% + 8px)',
+    backgroundColor: "#84c4cc",
+    height: 3,
+  },
+  lineHorizontal: {
+    border: "none",
+  },
+  active: {
+    '& $line': {
+      borderColor: '#784af4',
+    },
+  },
+  completed: {
+  },
+})(StepConnector);
+
+const customStepLabelDefaultStyles = {
+  root: {
+    display: 'flex',
+  }
+}
+
+const useCustomStepOneLabelStyles = makeStyles({
+  ...customStepLabelDefaultStyles,
+  iconContainer: {
+    alignSelf: 'flex-start',
+  },
+  label: {
+    textAlign: "start !important",
+  }
+});
+
+const useCustomStepTwoLabelStyles = makeStyles({
+  ...customStepLabelDefaultStyles,
+});
+
+const useCustomStepThreeLabelStyles = makeStyles({
+  iconContainer: {
+    alignSelf: 'flex-end',
+  },
+  label: {
+    textAlign: "end !important",
+  }
+});
+
+const useCustomStepIconStyles = makeStyles({
+  root: {
+    backgroundColor: '#00636C',
+    zIndex: 1,
+    color: "rgb(255, 255, 255, 0.6)",
+    width: 30,
+    height: 30,
+    display: 'flex',
+    borderRadius: '50%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  active: {
+    backgroundColor: '#EC008C',
+    color: '#fff',
+  },
+  completed: {
+    backgroundColor: '#EC008C',
+    color: '#fff',
+  },
+});
+
+function CustomStepIcon(props) {
+  const classes = useCustomStepIconStyles();
+  const { active, completed } = props;
+
+  return (
+    <div
+      className={clsx(classes.root, {
+        [classes.active]: active,
+        [classes.completed]: completed,
+      })}
+    >
+      <div className={classes.circle}>{props.icon}</div>
+    </div>
+  );
+}
 
 const steps = ['Input transfer details', 'Review', 'Transfer'];
 
 function Transfer({ web3, account }) {
   const classes = useStyles();
+  const customStepOneLabelStyles = useCustomStepOneLabelStyles();
+  const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
+  const customStepThreeLabelStyles = useCustomStepThreeLabelStyles();
   const [activeStep, setActiveStep] = useState(0);
   const [tokenInfo, setTokenInfo] = useState(null);
   const [validInputs, setValidInputs] = useState(null);
@@ -70,16 +171,37 @@ function Transfer({ web3, account }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientInfo, tokenInfo?.decimals]);
 
+  const getCustomStepLabelStyle = index => {
+    if (index === 0) {
+      return customStepOneLabelStyles;
+    } else if (index === 1) {
+      return customStepTwoLabelStyles;
+    } else if (index === 2) {
+      return customStepThreeLabelStyles;
+    } else {
+      return null;
+    }
+  }
+
   return (
-    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1}>
-      <Stepper activeStep={activeStep} alternativeLabel style={{ width: "612px" }} className={classes.stepper}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel><span className={classes.stepLabel}>{label}</span></StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-      <Box m={2}>
+    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1} mb={8}>
+      <Box my={2}>
+        <Stepper activeStep={activeStep} alternativeLabel className={classes.stepper} connector={<CustomStepConnector />}>
+          {steps.map((label, index) => (
+            <Step key={label}>
+              <StepLabel StepIconComponent={CustomStepIcon} classes={getCustomStepLabelStyle(index)}>
+                <span className={classes.stepLabel}>{label}</span>
+                {index <= activeStep && (
+                  <Box display="flex" justifyContent={index === 0 ? "flex-start" : (index === 1 ? "center" : "flex-end")} m={1}>
+                    <div className={classes.stepLabelUnderline} />
+                  </Box>
+                )}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      </Box>
+      <Box m={1}>
         <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>Token Blast</strong></Typography>
       </Box>
       <div>
@@ -93,24 +215,31 @@ function Transfer({ web3, account }) {
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
           />
           {activeStep > 0 && (
-            <TransferInfo
-              recipientInfo={recipientInfo}
-              totalAmount={totalAmount}
-            />
+            <>
+              <Box mt={4} mb={2} px={1}>
+                <Divider className={classes.divider} />
+              </Box>
+              <TransferInfo
+                recipientInfo={recipientInfo}
+                totalAmount={totalAmount}
+              />
+            </>
           )}
-          {activeStep === 0 && (
+          {activeStep < 2 && (
             <CsvInfo
               web3={web3}
+              account={account}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
               validInputs={validInputs}
               setValidInputs={setValidInputs}
               setRecipientInfo={setRecipientInfo}
+              activeStep={activeStep}
               setActiveStep={setActiveStep}
-              transaction
+              totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
             />
           )}
-          {activeStep === 1 && (
+          {false && (
             <RecipientInfo
               web3={web3}
               account={account}

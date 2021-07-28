@@ -6,11 +6,12 @@ import Button from '@material-ui/core/Button';
 import Transfer from './components/Transfer';
 import getWeb3 from './getWeb3';
 import covac_log_white from './assets/covac_logo_white.png';
+import covac_icon from './assets/covac_icon.png';
 
 const useStyles = makeStyles(() => ({
   header: {
     backgroundColor: "transparent",
-    height: 80,
+    height: 100,
     display: "flex",
     justifyContent: "space-between",
     flexDirection: "row",
@@ -23,13 +24,24 @@ const useStyles = makeStyles(() => ({
     display: 'block',
   },
   connectButton: {
-    backgroundColor: "#27689E",
+    backgroundColor: "rgb(255, 255, 255, 0.2)",
     borderRadius: 20,
     textTransform: "unset",
     minWidth: 100,
     color: "#FFFFFF",
+    boxShadow: "none",
     height: 40,
-  }
+    "&:hover": {
+      backgroundColor: "rgb(255, 255, 255, 0.2)",
+    },
+    paddingLeft: 0,
+    "& span": {
+      color: "rgb(255, 255, 255)",
+    },
+    "& img": {
+      marginRight: 8,
+    }
+  },
 }));
 
 function App() {
@@ -74,7 +86,10 @@ function App() {
     <div className="App">
       <AppBar position="static" className={classes.header}>
         <img src={covac_log_white} height={30} alt="covac logo" />
-        <Button variant="contained" size="small" disableRipple className={classes.connectButton} onClick={onConnect}>{account ? account : "Connect"}</Button>
+        <Button variant="contained" size="small" disableRipple className={classes.connectButton} classes={{ label: classes.connectButtonLabel }} onClick={onConnect}>
+          <img src={covac_icon} alt="covac icon" />
+          {account ? account : "Connect"}
+        </Button>
       </AppBar>
       <Transfer web3={web3} account={account} />
     </div>

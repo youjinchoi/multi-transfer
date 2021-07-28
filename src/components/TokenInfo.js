@@ -17,13 +17,19 @@ const useStyles = makeStyles((theme) => ({
     background: "#F9FAFB",
     border: "0.6px solid #E5E7EB",
     borderRadius: 15,
-    root: {
-
-    },
   },
   button: {
     background: "#EC008C",
-  }
+  },
+  loading: {
+    color: "#FFFFFF",
+  },
+  inputAlignCenter: {
+    "& input": {
+      textAlign: "center",
+      width: 150,
+    },
+  },
 }));
 
 const useStylesInput = makeStyles((theme) => ({
@@ -39,7 +45,10 @@ const useStylesInput = makeStyles((theme) => ({
       color: '#00636C',
       opacity: 1,
     }
-  }
+  },
+  disabled: {
+    color: "#00636C",
+  },
 }));
 
 function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
@@ -116,8 +125,8 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
         />
       </Box>
       {isLoading && (
-        <Box m={1} mt={2}>
-          <CircularProgress />
+        <Box m={1} mt={2} display="flex" justifyContent="center">
+          <CircularProgress className={classes.loading}/>
         </Box>
       )}
       {!!tokenInfo && tokenInfo.isValid && (
@@ -127,19 +136,19 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
               <Box display="flex" justifyContent="flex-start">
                 <Typography className={classes.label}>Name</Typography>
               </Box>
-              <CustomTextField value={tokenInfo.name} disabled m={1} />
+              <CustomTextField value={tokenInfo.name} disabled m={1} className={classes.inputAlignCenter} />
             </Box>
             <Box>
               <Box display="flex" justifyContent="flex-start">
                 <Typography className={classes.label}>Symbol</Typography>
               </Box>
-              <CustomTextField value={tokenInfo.symbol} disabled m={1} />
+              <CustomTextField value={tokenInfo.symbol} disabled m={1} className={classes.inputAlignCenter} />
             </Box>
             <Box>
               <Box display="flex" justifyContent="flex-start">
                 <Typography className={classes.label}>Decimals</Typography>
               </Box>
-              <CustomTextField value={tokenInfo.decimals} disabled m={1} />
+              <CustomTextField value={tokenInfo.decimals} disabled m={1} className={classes.inputAlignCenter} />
             </Box>
           </Box>
           <Box display="flex" justifyContent="center" flexDirection="column" m={1}>
@@ -151,7 +160,6 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
               disabled
               error={tokenInfo?.notEnoughBalance}
               helperText={tokenInfo?.notEnoughBalance ? "token balance is less than total amount to transfer" : null}
-              style={{ width: "612px" }}
             />
           </Box>
         </>

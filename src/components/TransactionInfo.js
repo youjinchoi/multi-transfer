@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Button } from '@material-ui/core';
+import {Box, Typography} from '@material-ui/core';
 import chunk from "lodash/chunk";
 import sum from "lodash/sum";
 import MultiTransferer from "../abis/MultiTransferer.json";
 import SingleTransactionInfo from "./SingleTransactionInfo";
 import CustomTextField from "./CustomTextField";
+import CustomButton from "./CustomButton";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -20,6 +21,21 @@ const useStyles = makeStyles((theme) => ({
   },
   resetContainer: {
     padding: theme.spacing(3),
+  },
+  label: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  inputAlignCenter: {
+    width: 150,
+    "& div": {
+      backgroundColor: "#FFE267",
+      border: "0.6px solid #E5E7EB",
+    },
+    "& input": {
+      textAlign: "center",
+      fontWeight: "bold",
+    },
   },
 }));
 
@@ -96,31 +112,31 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
     <Box className={classes.root} display="flex" flexDirection="column" alignItems="center">
       <Box display="flex" justifyContent="center">
         <Box m={1}>
+          <Typography className={classes.label}>Total Transaction Count</Typography>
           <CustomTextField
-            label="Total Transaction Count"
             disabled
             value={transactionCount ? transactionCount : "calculating..."}
-            style={{ width: "194px" }}
+            className={classes.inputAlignCenter}
           />
         </Box>
         <Box m={1}>
+          <Typography className={classes.label}>Gas Price(Gwei)</Typography>
           <CustomTextField
-            label="Gas Price(Gwei)"
             disabled
             value={gasPrice ? (gasPrice / 1000000000) : "loading..."}
-            style={{ width: "194px" }}
+            className={classes.inputAlignCenter}
           />
         </Box>
         <Box m={1}>
+          <Typography className={classes.label}>Estimated BNB Cost</Typography>
           <CustomTextField
-            label="Estimated BNB Cost"
             disabled
             value={estimatedCost ? estimatedCost.toFixed(6) : "calculating..."}
-            style={{ width: "194px" }}
+            className={classes.inputAlignCenter}
           />
         </Box>
       </Box>
-      <Box style={{ width: "612px" }} m={2}>
+      <Box style={{ width: "600px" }} m={2}>
         {!!recipientChunks.length && recipientChunks.map((chunk, index) => (
             <SingleTransactionInfo
               key={index}
@@ -143,21 +159,21 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setActiveSte
         )}
         <Box display="flex" justifyContent="center" m={2}>
           <Box m={1}>
-            {finishedTransactionCount === recipientChunks?.length ? (
-              <Button variant="contained" color="primary" onClick={() => window.location.reload()}>
+            {finishedTransactionCount > 0 && finishedTransactionCount === recipientChunks?.length ? (
+              <CustomButton variant="contained" color="primary" onClick={() => window.location.reload()}>
                 Reset
-              </Button>
+              </CustomButton>
             ) : (
               <>
-                <Button
+                <CustomButton
                   onClick={() => setGlobalActiveStep(1)}
                   disabled={false}
                 >
                   Back
-                </Button>
-                <Button variant="contained" color="primary" onClick={proceedTransfer} disabled={startTransfer || !estimatedCost}>
+                </CustomButton>
+                <CustomButton variant="contained" color="primary" onClick={proceedTransfer} disabled={startTransfer || !estimatedCost}>
                   Transfer
-                </Button>
+                </CustomButton>
               </>
             )}
           </Box>

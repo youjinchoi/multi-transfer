@@ -10,13 +10,17 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 15,
     background: "#F9FAFB",
     color: '#00636C',
+    fontSize: 18,
   },
   'input': {
     '&::placeholder': {
       color: '#00636C',
       opacity: 1,
     }
-  }
+  },
+  disabled: {
+    color: "#00636C",
+  },
 }));
 
 function CustomTextField(props) {

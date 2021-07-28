@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
-import { Box, Button, TablePagination, TableRow, TableHead, TableContainer, TableCell, TableBody, Table } from '@material-ui/core';
+import { Box, TablePagination, TableRow, TableHead, TableContainer, TableCell, TableBody, Table } from '@material-ui/core';
 import MultiTransferer from "../abis/MultiTransferer.json";
+import CustomButton from "./CustomButton";
 
 const StyledTableCell = withStyles((theme) => ({
   head: {
@@ -131,10 +132,10 @@ function RecipientInfo({ web3, account, recipientInfo, setActiveStep, tokenInfo,
       </Box>
       <div>
         <Box m={1}>
-          <Button onClick={() => setActiveStep(0)}>Back</Button>
-          <Button variant="contained" color="primary" onClick={handleNext} disabled={tokenInfo?.notEnoughBalance}>
+          <CustomButton onClick={() => setActiveStep(0)}>Back</CustomButton>
+          <CustomButton variant="contained" color="primary" onClick={handleNext} disabled={tokenInfo?.notEnoughBalance}>
             {isEnoughAllowances ? "Next" : "Approve"}
-          </Button>
+          </CustomButton>
         </Box>
       </div>
     </Box>
