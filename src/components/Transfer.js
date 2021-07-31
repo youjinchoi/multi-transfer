@@ -210,7 +210,7 @@ function Transfer({ web3, account, networkId }) {
         </Stepper>
       </Box>
       <Box m={1}>
-        <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>Token Blast</strong></Typography>
+        <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>TokenBlast</strong></Typography>
       </Box>
       <div>
         <Box>
