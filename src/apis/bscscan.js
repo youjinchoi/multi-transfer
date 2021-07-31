@@ -3,9 +3,9 @@ import { getBaseApiUrl } from "../urls";
 
 const API_KEY = "4EVTT1FDIJ1P5MF9G8UFKDACCWWN8X3V4E";
 
-export const getContractABI = async (address) => {
+export const getContractABI = async (address, networkId) => {
   try {
-    const response = await axios.get(`${getBaseApiUrl()}/api?module=contract&action=getabi&address=${address}&apikey=${API_KEY}`);
+    const response = await axios.get(`${getBaseApiUrl(networkId)}/api?module=contract&action=getabi&address=${address}&apikey=${API_KEY}`);
     if (response?.data?.message === "OK") {
       return JSON.parse(response?.data?.result);
     } else {

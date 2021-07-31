@@ -48,6 +48,7 @@ function App() {
   const classes = useStyles();
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
+  const [networkId, setNetworkId] = useState(null);
   // const [networkId, setNetworkId] = useState(null);
 
   useEffect(() => {
@@ -56,9 +57,9 @@ function App() {
         const web3 = await getWeb3();
         const accounts = await web3.eth.getAccounts();
         const networkId = await web3.eth.net.getId();
-        window.__networkId__ = networkId;
         setWeb3(web3);
         setAccount(accounts[0]);
+        setNetworkId(networkId);
         // setNetworkId(networkId);
         setInterval(async () => {
           const newAccounts = await web3.eth.getAccounts();
@@ -91,7 +92,7 @@ function App() {
           {account ? account : "Connect"}
         </Button>
       </AppBar>
-      <Transfer web3={web3} account={account} />
+      <Transfer web3={web3} account={account} networkId={networkId} />
     </div>
   );
 }

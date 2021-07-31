@@ -1,16 +1,16 @@
-export const getTransactionUrl = hash => {
-  if (window.__networkId__ === 97) {
+export const getTransactionUrl = (hash, networkId) => {
+  if (networkId) {
     return `https://testnet.bscscan.com/tx/${hash}`;
-  } else if (window.__networkId__ === 56) {
+  } else if (networkId) {
     return `https://bscscan.com/tx/${hash}`;
   }
   throw Error("not supported network");
 }
 
-export const getBaseApiUrl = () => {
-  if (window.__networkId__ === 97) {
+export const getBaseApiUrl = (networkId) => {
+  if (networkId === 97) {
     return "https://api-testnet.bscscan.com";
-  } else if (window.__networkId__ === 56) {
+  } else if (networkId === 56) {
     return "https://api.bscscan.com";
   }
   throw Error("not supported network");

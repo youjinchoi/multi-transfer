@@ -51,7 +51,7 @@ const useStylesInput = makeStyles((theme) => ({
   },
 }));
 
-function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
+function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const inputClasses = useStylesInput();
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +71,7 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
     if (!tokenInfo?.isValid) {
       setTokenInfo({ isValid: true, errorMessage: null });
     }
-    const abi = await getContractABI(value);
+    const abi = await getContractABI(value, networkId);
     if (!abi) {
       setTokenInfo({ isValid: false, errorMessage: "Invalid token address. please check again" });
       setIsLoading(false);

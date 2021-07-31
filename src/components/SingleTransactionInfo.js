@@ -55,7 +55,7 @@ const CustomTableCell = withStyles(() => ({
   },
 }))(TableCell);
 
-function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo, gasPrice, addEstimatedGasAmount, increaseFinishedTransactionCount, startTransfer }) {
+function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, recipientInfo, gasPrice, addEstimatedGasAmount, increaseFinishedTransactionCount, startTransfer }) {
   const classes = useStyles();
   const [transactionHash, setTransactionHash] = useState(null);
   const [transactionErrorMessage, setTransactionErrorMessage] = useState(null);
@@ -76,7 +76,7 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
   }, [transactionStatus])
 
   useEffect(() => {
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
 
     const calculateGas = async () => {
       const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
@@ -92,7 +92,18 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
         const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({
           from: account
         })
-        console.log("gasPrice", gasPrice);
+        web3.eth.estimateGas({
+          from: account,
+          data: encodedData,
+          gasPrice: gasPrice,
+          to: multiTransfererAddress,
+        })
+          .then(gasResult => {
+            console.log("gasResult", gasResult);
+            setGasAmount(gasResult);
+          })
+          .catch(e => console.error("error occured", e));
+        /*
         const gasResult = await web3.eth.estimateGas({
           from: account,
           data: encodedData,
@@ -100,7 +111,7 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
           to: multiTransfererAddress,
         })
         console.log('gas', gasResult);
-        setGasAmount(gasResult);
+         */
       } catch (error) {
         setTransactionErrorMessage(error?.message ?? "gas estimation error");
         console.error(error);
@@ -116,7 +127,7 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
     if (!startTransfer) {
       return;
     }
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
     const addresses = [];
     const amounts = [];
@@ -158,7 +169,7 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
       return <Typography className={classes.errorMessage}>{transactionErrorMessage}</Typography>;
     } else if (!!transactionHash) {
       return (
-        <Link href={getTransactionUrl(transactionHash)} target="_blank">{transactionHash}</Link>
+        <Link href={getTransactionUrl(transactionHash, networkId)} target="_blank">{transactionHash}</Link>
       );
     } else {
       return <Typography>Pending Approval</Typography>;

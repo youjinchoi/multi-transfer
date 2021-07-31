@@ -28,7 +28,7 @@ const useStyles = makeStyles({
   },
 });
 
-function RecipientInfo({ web3, account, recipientInfo, setActiveStep, tokenInfo, totalAmountWithDecimalsBN }) {
+function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep, tokenInfo, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -37,7 +37,7 @@ function RecipientInfo({ web3, account, recipientInfo, setActiveStep, tokenInfo,
   // const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] = useState(null);
 
   useEffect(() => {
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call()
       .then(allowance => {
         // console.log("allowance", allowance);
@@ -52,7 +52,7 @@ function RecipientInfo({ web3, account, recipientInfo, setActiveStep, tokenInfo,
   }, [])
 
   const approveTokenAndProceed = () => {
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
       .send({ from: account })
       .on('transactionHash', hash => {

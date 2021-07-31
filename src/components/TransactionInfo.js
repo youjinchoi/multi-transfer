@@ -85,7 +85,7 @@ const CustomTableCell = withStyles(() => ({
 
 const deadAddress = "0x0000000000000000000000000000000000000000";
 
-function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipientInfo, setActiveStep, transactionCount, setTransactionCount, reset }) {
+function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, setRecipientInfo, setActiveStep, transactionCount, setTransactionCount, reset }) {
   const classes = useStyles();
   const [recipientChunks, setRecipientChunks] = useState([]);
   const [validRecipientInfo, setValidRecipientInfo] = useState(null);
@@ -96,18 +96,19 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipient
   const [isLoading, setIsLoading] = useState(true);
   const [calculatingMessage, setCalculatingMessage] = useState("Calculating Transaction Count");
   const [failedAddresses, setFailedAddresses] = useState(null);
+  const [estimatedTransactionCount, setEstimatedTransactionCount] = useState(null);
 
   const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
   const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
 
   useEffect(() => {
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
 
     const chunks = chunk(recipientInfo, 10);
     const failedAddressSet = new Set();
     const filterOutFailedAddresses = async () => {
-      await Promise.all(chunks.map(async (chunk, index) => {
+      await Promise.all(chunks.map(async chunk => {
         const addresses = [];
         const amounts = [];
         chunk.forEach(({ address, amount }) => {
@@ -118,12 +119,9 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipient
         const failedAddresses = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).call({
           from: account,
         });
-        failedAddresses.forEach((failed, subIndex) => {
+        failedAddresses.forEach(failed => {
           if (failed !== deadAddress) {
-            console.log("failed", failed);
             failedAddressSet.add(failed);
-          } else {
-            failedAddressSet.add("0x7b18D2Be18f31ab13c3D89d86680742eaBD95519");
           }
         });
       }));
@@ -144,10 +142,67 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipient
   }, []);
 
   useEffect(() => {
+    if (!estimatedTransactionCount) {
+      return;
+    }
+    const checkGasFee = async (estimatedTransactionCount) => {
+      console.log("checkGasFee", estimatedTransactionCount);
+      const testChunkSize = validRecipientInfo?.length / estimatedTransactionCount;
+      console.log("testChunkSize", testChunkSize);
+      const testChunk = validRecipientInfo.slice(0, testChunkSize + 1);
+      const multiTransfererAddress = MultiTransferer.addresses[networkId];
+      const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+
+      const addresses = [];
+      const amounts = [];
+      testChunk.forEach(({ address, amount }) => {
+        addresses.push(address);
+        const amountBN = new web3.utils.BN(amount);
+        amounts.push(amountBN.mul(multiplierBN).toString());
+      });
+
+      try {
+        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({
+          from: account
+        })
+        web3.eth.estimateGas({
+          from: account,
+          data: encodedData,
+          gasPrice: gasPrice,
+          to: multiTransfererAddress,
+        })
+          .then(gasResult => {
+            console.log("gasResult", gasResult);
+            const value = Math.floor(validRecipientInfo?.length / estimatedTransactionCount);
+            const mod = validRecipientInfo?.length % estimatedTransactionCount;
+            const estimatedTransferPerTransaction = mod === 0 ? value : value + 1;
+            setTransactionCount(estimatedTransactionCount);
+            setRecipientChunks(chunk(validRecipientInfo, estimatedTransferPerTransaction));
+            setIsLoading(false);
+          })
+          .catch(e => {
+            console.error("error occured", e)
+            if (e.message.startsWith("gas required exceeds allowance")) {
+              console.log("adjust transaction count");
+              setEstimatedTransactionCount(estimatedTransactionCount + 1);
+            }
+          });
+      } catch (error) {
+        console.error(error);
+        return;
+      }
+    }
+    checkGasFee(estimatedTransactionCount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estimatedTransactionCount]);
+
+
+
+  useEffect(() => {
     if (validRecipientInfo?.length) {
       setCalculatingMessage("Calculating Estimated BNB Cost");
 
-      const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+      const multiTransfererAddress = MultiTransferer.addresses[networkId];
       const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
 
       const getGasFee = async () => {
@@ -157,22 +212,29 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipient
         const gasPriceResult = await web3.eth.getGasPrice();
         console.log("gasPrice", gasPriceResult);
         setGasPrice(gasPriceResult);
-        const gasResult = await web3.eth.estimateGas({
-          from: account,
-          data: encodedData,
-          gasPrice: gasPrice,
-          to: multiTransfererAddress,
-        })
-
-        const estimatedTransferPerTransaction = Math.round(25000000 / gasResult);
-        const value = Math.floor(validRecipientInfo?.length / estimatedTransferPerTransaction);
-        const mod = validRecipientInfo?.length % estimatedTransferPerTransaction;
-        const estimatedTransactionCount = mod === 0 ? value : value + 1;
-        console.log("estimated transaction count", estimatedTransactionCount);
-        console.log("gasResult", gasResult);
-        setTransactionCount(estimatedTransactionCount);
-        setRecipientChunks(chunk(validRecipientInfo, estimatedTransferPerTransaction));
-        setIsLoading(false);
+        try {
+          const gasResult = await web3.eth.estimateGas({
+            from: account,
+            data: encodedData,
+            gasPrice: gasPrice,
+            to: multiTransfererAddress,
+          });
+          console.log("gasResult", gasResult);
+          const estimatedTransferPerTransaction = Math.round(25000000 / (gasResult * 3));
+          console.log("estimatedTransferPerTransaction", estimatedTransferPerTransaction);
+          const value = Math.floor(validRecipientInfo?.length / estimatedTransferPerTransaction);
+          const mod = validRecipientInfo?.length % estimatedTransferPerTransaction;
+          const estimatedTransactionCount = mod === 0 ? value : value + 1;
+          console.log("estimated transaction count", estimatedTransactionCount);
+          // setEstimatedTransactionCount(estimatedTransactionCount);
+          console.log("estimated transaction count", estimatedTransactionCount);
+          console.log("gasResult", gasResult);
+          setTransactionCount(estimatedTransactionCount);
+          setRecipientChunks(chunk(validRecipientInfo, estimatedTransferPerTransaction));
+          setIsLoading(false);
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       getGasFee();
@@ -281,6 +343,7 @@ function TransactionInfo({ web3, account, tokenInfo, recipientInfo, setRecipient
                     index={index}
                     web3={web3}
                     account={account}
+                    networkId={networkId}
                     tokenInfo={tokenInfo}
                     recipientInfo={chunk}
                     gasPrice={gasPrice}

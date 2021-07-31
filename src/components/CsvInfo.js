@@ -86,7 +86,7 @@ const CustomTableCell = withStyles(() => ({
 }))(TableCell);
 
 
-function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
+function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
@@ -201,7 +201,7 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
   }
 
   const approveTokenAndProceed = () => {
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
       .send({ from: account })
       .on('transactionHash', hash => {
@@ -223,7 +223,7 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
 
   const handleStep2ToStep3 = () => {
     setIsLoading(true);
-    const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
+    const multiTransfererAddress = MultiTransferer.addresses[networkId];
     tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call()
       .then(allowance => {
         console.log("allowance", allowance);

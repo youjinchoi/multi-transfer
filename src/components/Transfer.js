@@ -5,7 +5,6 @@ import TransactionInfo from './TransactionInfo';
 import { Box, Button, Divider, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
-import RecipientInfo from "./RecipientInfo";
 import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
@@ -130,7 +129,7 @@ function CustomStepIcon(props) {
 
 const steps = ['Input transfer details', 'Review', 'Transfer'];
 
-function Transfer({ web3, account }) {
+function Transfer({ web3, account, networkId }) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -218,6 +217,7 @@ function Transfer({ web3, account }) {
           <TokenInfo
             web3={web3}
             account={account}
+            networkId={networkId}
             activeStep={activeStep}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
@@ -238,6 +238,7 @@ function Transfer({ web3, account }) {
             <CsvInfo
               web3={web3}
               account={account}
+              networkId={networkId}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
               validInputs={validInputs}
@@ -248,22 +249,11 @@ function Transfer({ web3, account }) {
               totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
             />
           )}
-          {false && (
-            <RecipientInfo
-              web3={web3}
-              account={account}
-              recipientInfo={recipientInfo}
-              setActiveStep={setActiveStep}
-              transactionCount={transactionCount}
-              totalAmount={totalAmount}
-              totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
-              tokenInfo={tokenInfo}
-            />
-          )}
           {activeStep > 1 && (
             <TransactionInfo
               web3={web3}
               account={account}
+              networkId={networkId}
               tokenInfo={tokenInfo}
               recipientInfo={recipientInfo}
               setRecipientInfo={setRecipientInfo}
