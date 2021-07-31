@@ -9,7 +9,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: 8,
   },
   inputAlignCenter: {
-    width: 150,
+    width: 180,
     "& div": {
       backgroundColor: "#FFE267",
       border: "0.6px solid #E5E7EB",

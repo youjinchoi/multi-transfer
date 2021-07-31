@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import CsvInfo from './CsvInfo';
 import TransactionInfo from './TransactionInfo';
-import { Box, Button, Divider, Step, StepLabel, Stepper, StepConnector, Typography } from '@material-ui/core';
+import { Box, Button, Divider, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
 import RecipientInfo from "./RecipientInfo";
-import withStyles from "@material-ui/core/styles/withStyles";
 import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
@@ -41,27 +40,26 @@ const useStyles = makeStyles((theme) => ({
   divider: {
     backgroundColor: "#C1F4F7",
   },
-}));
-
-const CustomStepConnector = withStyles({
-  alternativeLabel: {
+  connector1: {
+    position: "absolute",
     top: 13,
-    left: 'calc(-100% + 8px)',
-    right: 'calc(0% + 8px)',
-    backgroundColor: "#84c4cc",
+    left: 'calc(-90%)',
+    right: 'calc(50%)',
+    backgroundColor: "#fff",
+    height: 3,
+    "& :disabled": {
+      backgroundColor: "84c4cc",
+    }
+  },
+  connector2: {
+    position: "absolute",
+    top: 13,
+    left: 'calc(-50%)',
+    right: 'calc(10%)',
+    backgroundColor: "#fff",
     height: 3,
   },
-  lineHorizontal: {
-    border: "none",
-  },
-  active: {
-    '& $line': {
-      borderColor: '#784af4',
-    },
-  },
-  completed: {
-  },
-})(StepConnector);
+}));
 
 const customStepLabelDefaultStyles = {
   root: {
@@ -145,6 +143,16 @@ function Transfer({ web3, account }) {
   const [totalAmount, setTotalAmount] = useState(null);
   const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] = useState(null);
 
+  const reset = () => {
+    setActiveStep(0);
+    setTokenInfo(null);
+    setValidInputs(null);
+    setRecipientInfo(null);
+    setTransactionCount(null);
+    setTotalAmount(null);
+    setTotalAmountWithDecimalsBN(null);
+  };
+
   useEffect(() => {
     if (!web3) {
       return;
@@ -186,11 +194,12 @@ function Transfer({ web3, account }) {
   return (
     <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1} mb={8}>
       <Box my={2}>
-        <Stepper activeStep={activeStep} alternativeLabel className={classes.stepper} connector={<CustomStepConnector />}>
+        <Stepper activeStep={activeStep} alternativeLabel className={classes.stepper} connector={() => {}}>
           {steps.map((label, index) => (
             <Step key={label}>
+              {index > 0 && <div style={index > activeStep ? { backgroundColor: "#84c4cc"} : {}} className={index === 1 ? classes.connector1 : classes.connector2} />}
               <StepLabel StepIconComponent={CustomStepIcon} classes={getCustomStepLabelStyle(index)}>
-                <span className={classes.stepLabel}>{label}</span>
+                <span className={classes.stepLabel} style={index > activeStep ? { opacity: 0.5 } : null }>{label}</span>
                 {index <= activeStep && (
                   <Box display="flex" justifyContent={index === 0 ? "flex-start" : (index === 1 ? "center" : "flex-end")} m={1}>
                     <div className={classes.stepLabelUnderline} />
@@ -257,11 +266,14 @@ function Transfer({ web3, account }) {
               account={account}
               tokenInfo={tokenInfo}
               recipientInfo={recipientInfo}
+              setRecipientInfo={setRecipientInfo}
               setActiveStep={setActiveStep}
               transactionCount={transactionCount}
               setTransactionCount={setTransactionCount}
               totalAmount={totalAmount}
+              setTotalAmount={setTotalAmount}
               totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
+              reset={reset}
             />
           )}
         </Box>

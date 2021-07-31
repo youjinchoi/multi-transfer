@@ -8,12 +8,9 @@ import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
-import { Typography } from "@material-ui/core";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
+import {Link, Typography} from "@material-ui/core";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
-import Button from "@material-ui/core/Button";
 import { makeStyles } from '@material-ui/core/styles';
 import CustomButton from "./CustomButton";
 import { UnControlled as CodeMirror } from 'react-codemirror2'
@@ -24,6 +21,8 @@ import "codemirror/mode/xml/xml";
 import "codemirror/mode/javascript/javascript";
 import MultiTransferer from "../abis/MultiTransferer.json";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import withStyles from "@material-ui/core/styles/withStyles";
+import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -58,14 +57,42 @@ const useStyles = makeStyles(() => ({
     marginLeft: -12,
     color: "#FFFFFF",
   },
+  lineNumberCell: {
+    color: "#00636C"
+  },
+  lineCell: {
+    color: "#B10069",
+  },
+  tableContainer: {
+    height: 400,
+  },
+  step1Table: {
+    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+  },
+  discardButton: {
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+  tokenApprovalErrorMessage: {
+    color: "#f44336",
+  },
 }));
+
+const CustomTableCell = withStyles(() => ({
+  root: {
+    border: "none",
+  },
+}))(TableCell);
+
 
 function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [invalidInputs, setInvalidInputs] = useState(null);
   const [editorValue, setEditorValue] = useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] = useState(null);
 
   const handleCloseToast = () => {
     setToast(null);
@@ -107,19 +134,22 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
   }
 
   useEffect(() => {
-    console.log("validInputs", validInputs);
     if (!validInputs?.length) {
       setEditorValue("");
       return;
     }
-    const lines = validInputs?.map(({ line }) => line.join(","));
-    setEditorValue(lines.join("\n"));
-  }, [validInputs]);
+    if (activeStep === 0) {
+      const lines = validInputs?.map(({ line }) => line.join(","));
+      setEditorValue(lines.join("\n"));
+    } else if (activeStep === 1) {
+      const lines = validInputs?.map(({ line }) => line.join("    "));
+      setEditorValue(lines.join("\n"));
+    }
+  }, [validInputs, activeStep]);
 
   const onFileDrop = (event) => {
     const validFiles = [];
     const invalidFiles = [];
-    console.log(event.target.files);
     Array.from(event?.target?.files).forEach(file => {
       if (file.name.endsWith(".csv")) {
         validFiles.push(file);
@@ -178,7 +208,8 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
         // setApprovalTransactionHash(hash);
       })
       .on('error', (error) => {
-        // setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
+        setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
+        setIsLoading(false);
         console.error(error);
       })
       .then(response => {
@@ -207,6 +238,11 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
       });
   }
 
+  const handleBack = () => {
+    setTokenApprovalErrorMessage(null);
+    setActiveStep(0);
+  }
+
   const handleNext = () => {
     if (activeStep === 0) {
       handleStep1ToStep2();
@@ -216,28 +252,34 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
   }
 
   const onCodeMirrorChange = (editor, data, value) => {
+    // console.log(value);
     setEditorValue(value);
+  }
+
+  const discard = () => {
+    setValidInputs(null);
+    setTokenInfo({ ...tokenInfo, notEnoughBalance: false })
   }
 
   return (
     <>
       <Box display="flex" justifyContent="center" flexDirection="column" p={1} className={classes.container} mb={2}>
-        <Box display="flex" justifyContent={(!!editorValue && activeStep === 0) ? "space-between" : "flex-start"}>
+        <Box display="flex" justifyContent={(!!editorValue && activeStep === 0) ? "space-between" : "flex-start"} alignItems="center">
           <Typography className={classes.label}>{activeStep === 0 ? "List of Addresses in CSV" : "Imported lines"}</Typography>
           {(!!editorValue && activeStep === 0) && (
-            <CustomButton onClick={() => setValidInputs(null)}>
+            <Link onClick={discard} className={classes.discardButton}>
               Discard
-            </CustomButton>
+            </Link>
           )}
         </Box>
         <CodeMirror
           value={editorValue}
           options={{
             lineNumbers: true,
-            readOnly: activeStep === 1,
+            readOnly: false,
           }}
           onChange={onCodeMirrorChange}
-          className={classes.textarea}
+          className={activeStep === 1 ? "Step2-line" : ""}
         />
         {activeStep === 0 && (
           <Box display="flex" justifyContent="flex-start" mt={4}>
@@ -263,47 +305,56 @@ function CsvInfo({ web3, account, tokenInfo, setTokenInfo, validInputs, setValid
         </MuiAlert>
       </Snackbar>
       {!!invalidInputs?.length && (
-        <Dialog onClose={handleClose} open={!!invalidInputs?.length} fullWidth={true} maxWidth="md">
-          <DialogTitle id="customized-dialog-title" onClose={handleClose}>
+        <CustomDialog onClose={handleClose} open={!!invalidInputs?.length} fullWidth={true} maxWidth="md">
+          <CustomDialogTitle onClose={handleClose}>
             Invalid inputs below will be ignored
-          </DialogTitle>
-          <DialogContent dividers>
+          </CustomDialogTitle>
+          <DialogContent>
             <Table size="small">
               <TableBody>
                 {invalidInputs.map(({ lineNumber, reason, line }) => (
                   <TableRow key={lineNumber}>
-                    <TableCell>{`line ${lineNumber}`}</TableCell>
-                    <TableCell>{line.join(",")}</TableCell>
-                    <TableCell>{reason}</TableCell>
+                    <CustomTableCell className={classes.lineNumberCell}>{lineNumber}</CustomTableCell>
+                    <CustomTableCell className={classes.lineCell}>{line.join(",")}</CustomTableCell>
+                    <CustomTableCell className={classes.lineCell}>{reason}</CustomTableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </DialogContent>
           <DialogActions>
-            <Button autoFocus onClick={handleClose} color="primary">
-              OK
-            </Button>
+            <Box m={2}>
+              <CustomButton autoFocus onClick={handleClose} variant="contained" color="primary">
+                OK
+              </CustomButton>
+            </Box>
           </DialogActions>
-        </Dialog>
+        </CustomDialog>
       )}
-      <Box display="flex" justifyContent="center" mt={1}>
-        {activeStep === 1 && (
-          <CustomButton onClick={() => setActiveStep(0)}>
-            Back
-          </CustomButton>
+      <Box display="flex" justifyContent="center" mt={1} alignItems="center" flexDirection="column">
+        {!isLoading && tokenApprovalErrorMessage && (
+          <Box m={2}>
+            <Typography className={classes.tokenApprovalErrorMessage}>{tokenApprovalErrorMessage}</Typography>
+          </Box>
         )}
-        <div className={classes.wrapper}>
-          <CustomButton
-            variant="contained"
-            color="primary"
-            disabled={isLoading}
-            onClick={handleNext}
-          >
-            Next
-          </CustomButton>
-          {isLoading && <CircularProgress size={24} className={classes.buttonProgress} />}
-        </div>
+        <Box display="flex" justifyContent="center">
+          {activeStep === 1 && (
+            <CustomButton onClick={handleBack}>
+              Back
+            </CustomButton>
+          )}
+          <div className={classes.wrapper}>
+            <CustomButton
+              variant="contained"
+              color="primary"
+              disabled={isLoading}
+              onClick={handleNext}
+            >
+              Next
+            </CustomButton>
+            {isLoading && <CircularProgress size={24} className={classes.buttonProgress} />}
+          </div>
+        </Box>
       </Box>
     </>
   );

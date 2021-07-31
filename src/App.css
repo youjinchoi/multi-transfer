@@ -11,22 +11,28 @@
 
 .CodeMirror {
   border-radius: 15px;
-  font-size: 15px;
 }
 
 .CodeMirror-vscrollbar {
   right: 10px !important;
 }
 
+/*
+TODO adjust codemirror design similar to figma
 .CodeMirror-line {
   margin: 4px !important;
   color: #00636C !important;
   line-height: 25px !important;
 }
 
+.Step2-line .CodeMirror-line {
+  border-bottom: 1px solid #D1E4E6 !important;
+}
+
 .CodeMirror-linenumber {
   line-height: 25px !important;
 }
+ */
 
 .App-header {
   background-color: #282c34;

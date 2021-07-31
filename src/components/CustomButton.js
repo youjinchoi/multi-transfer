@@ -7,10 +7,10 @@ const CustomButton = withStyles({
     textTransform: "unset",
     color: "#FFFFFF",
     fontSize: 16,
+    height: 50,
+    minWidth: 120,
   },
   contained: {
-    height: 50,
-    minWidth: 150,
     backgroundColor: '#EC008C',
     '&:hover': {
       backgroundColor: '#EC008C',

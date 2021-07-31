@@ -4,7 +4,7 @@ import React from "react";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    padding: 10,
+    padding: "10px 20px",
     height: 50,
     border: "0.6px solid #E5E7EB",
     borderRadius: 15,
@@ -21,18 +21,21 @@ const useStyles = makeStyles((theme) => ({
   disabled: {
     color: "#00636C",
   },
+  error: {
+    border: "2px solid #f44336",
+  }
 }));
 
-function CustomTextField(props) {
+function CustomTextField({ InputProps, ...rest}) {
   const classes = useStyles();
 
   return (
     <TextField
       InputProps={{
-        classes,
+        classes: {...InputProps?.classes, ...classes},
         disableUnderline: true,
       }}
-      {...props}
+      {...rest}
     />
   );
 }

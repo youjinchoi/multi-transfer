@@ -3,15 +3,63 @@ import { Box, CircularProgress, Typography, Link } from '@material-ui/core';
 import { Check, Error } from '@material-ui/icons';
 import MultiTransferer from "../abis/MultiTransferer.json";
 import { getTransactionUrl } from "../urls";
+import TableRow from "@material-ui/core/TableRow";
+import withStyles from "@material-ui/core/styles/withStyles";
+import TableCell from "@material-ui/core/TableCell";
+import {makeStyles} from "@material-ui/core/styles";
 
+const useStyles = makeStyles(() => ({
+  lineNumberCell: {
+    color: "#00636C",
+    backgroundColor: "#F0F0F0",
+    width: 20,
+    textAlign: "center",
+  },
+  messageCell: {
+    "& a": {
+      fontSize: 13
+    },
+  },
+  iconCell: {
+    width: 20,
+  },
+  checkIcon: {
+    color: "#35B968",
+  },
+  loadingIcon: {
+    width: 16,
+    height: 16,
+  },
+  errorMessage: {
+    color: "#f44336",
+  },
+}));
 
-const deadAddress = "0x0000000000000000000000000000000000000000";
+const CustomTableRow = withStyles(() => ({
+  root: {
+    "&:first-child td:first-child": {
+      borderTopLeftRadius: 15,
+    },
+    "&:last-child td:first-child": {
+      borderBottomLeftRadius: 15,
+    }
+  },
+}))(TableRow);
+
+const CustomTableCell = withStyles(() => ({
+  root: {
+    border: "none",
+    fontSize: 16,
+    color: "#00636C",
+    padding: "12px 16px",
+  },
+}))(TableCell);
 
 function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo, gasPrice, addEstimatedGasAmount, increaseFinishedTransactionCount, startTransfer }) {
+  const classes = useStyles();
   const [transactionHash, setTransactionHash] = useState(null);
   const [transactionErrorMessage, setTransactionErrorMessage] = useState(null);
   const [transactionStatus, setTransactionStatus] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [gasAmount, setGasAmount] = useState(null);
 
   const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
@@ -58,15 +106,6 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
         console.error(error);
         return;
       }
-
-      const failedAddresses = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).call({
-        from: account,
-        gasPrice: gasPrice,
-      });
-      const filteredFailedAddresses = failedAddresses.filter(address => address !== deadAddress);
-      if (filteredFailedAddresses?.length) {
-        console.warn("found failed addresses", filteredFailedAddresses);
-      }
     }
 
     calculateGas();
@@ -77,7 +116,6 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
     if (!startTransfer) {
       return;
     }
-    setIsLoading(true);
     const multiTransfererAddress = MultiTransferer.addresses[window.__networkId__];
     const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
     const addresses = [];
@@ -99,16 +137,13 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
         })
         .on('error', (error) => {
           setTransactionErrorMessage(error?.message ?? "failed to multi transfer");
-          setIsLoading(false);
         })
         .then(result => {
           console.log("transaction finisih", result);
           setTransactionStatus("finish");
-          setIsLoading(false);
         });
     } catch (error) {
       setTransactionErrorMessage(error?.message ?? "failed to multi transfer");
-      setIsLoading(false);
       console.error(error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,29 +153,40 @@ function SingleTransactionInfo({ index, web3, account, tokenInfo, recipientInfo,
     return null;
   }
 
+  const getMessage = () => {
+    if (!!transactionErrorMessage) {
+      return <Typography className={classes.errorMessage}>{transactionErrorMessage}</Typography>;
+    } else if (!!transactionHash) {
+      return (
+        <Link href={getTransactionUrl(transactionHash)} target="_blank">{transactionHash}</Link>
+      );
+    } else {
+      return <Typography>Pending Approval</Typography>;
+    }
+  }
+
+  const getIcon = () => {
+    if (transactionErrorMessage) {
+      return <Error color="error" />;
+    } else if (transactionStatus === "finish") {
+      return <Check className={classes.checkIcon} />;
+    } else {
+      return <CircularProgress size={16} />;
+    }
+  }
+
   return (
-    <Box display="flex" flexDirection="column" alignItems="center">
-      <Box style={{ width: "612px" }}>
-        <div>
-          <Typography>
-            Transaction {index + 1}
-            {isLoading && <CircularProgress style={{ width: 12, height: 12, marginLeft: 10 }} />}
-            {transactionStatus === "finish" && <Check style={{ color: '#784af4', fontSize: 18, marginLeft: 10 }} />}
-            {!!transactionErrorMessage && <Error color="error" style={{ fontSize: 18, marginLeft: 10 }}/>}
-          </Typography>
-        </div>
-        {!!transactionHash && (
-          <Typography variant="caption">
-            <Link href={getTransactionUrl(transactionHash)} target="_blank">{transactionHash}</Link>
-          </Typography>
-        )}
-        {!!transactionErrorMessage && (
-          <Typography variant="caption" color="error">
-            {transactionErrorMessage}
-          </Typography>
-        )}
-      </Box>
-    </Box>
+    <CustomTableRow>
+      <CustomTableCell className={classes.lineNumberCell}>{index + 1}</CustomTableCell>
+      <CustomTableCell className={classes.messageCell}>
+        {getMessage()}
+      </CustomTableCell>
+      <CustomTableCell className={classes.iconCell}>
+        <Box display="flex" alignItems="center">
+          {getIcon()}
+        </Box>
+      </CustomTableCell>
+    </CustomTableRow>
   );
 }
 

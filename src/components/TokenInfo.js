@@ -63,10 +63,14 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
       return;
     }
     if (!Web3Utils.isAddress(value)) {
+      console.log("here");
       setTokenInfo({ isValid: false, errorMessage: "Invalid token address. please check again" });
       return;
     }
     setIsLoading(true);
+    if (!tokenInfo?.isValid) {
+      setTokenInfo({ isValid: true, errorMessage: null });
+    }
     const abi = await getContractABI(value);
     if (!abi) {
       setTokenInfo({ isValid: false, errorMessage: "Invalid token address. please check again" });
@@ -122,6 +126,8 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
             disableUnderline: true,
             placeholder: "Input your Token Address",
           }}
+          error={tokenInfo?.isValid === false}
+          helperText={tokenInfo?.isValid === false ? tokenInfo?.errorMessage : null}
         />
       </Box>
       {isLoading && (
@@ -129,7 +135,7 @@ function TokenInfo({ web3, account, activeStep, tokenInfo, setTokenInfo, totalAm
           <CircularProgress className={classes.loading}/>
         </Box>
       )}
-      {!!tokenInfo && tokenInfo.isValid && (
+      {!isLoading && !!tokenInfo && tokenInfo.isValid && (
         <>
           <Box display="flex" justifyContent="space-between" p={1}>
             <Box>
