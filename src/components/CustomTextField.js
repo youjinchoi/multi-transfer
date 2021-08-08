@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) => ({
     color: "#00636C",
   },
   error: {
-    border: "2px solid #CE596A",
+    border: "3px solid #CE596A",
     backgroundColor: "#FFEEF8",
     "& input": {
       color: "#B10015 !important",
