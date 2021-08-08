@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
     color: '#00636C',
     fontSize: 18,
   },
-  'input': {
+  input: {
     '&::placeholder': {
       color: '#00636C',
       opacity: 1,
@@ -22,7 +22,11 @@ const useStyles = makeStyles((theme) => ({
     color: "#00636C",
   },
   error: {
-    border: "2px solid #f44336",
+    border: "2px solid #CE596A",
+    backgroundColor: "#FFEEF8",
+    "& input": {
+      color: "#B10015 !important",
+    },
   }
 }));
 

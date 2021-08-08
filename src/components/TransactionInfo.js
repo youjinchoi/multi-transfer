@@ -91,6 +91,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
   const [validRecipientInfo, setValidRecipientInfo] = useState(null);
   const [gasPrice, setGasPrice] = useState(null);
   const [estimatedGasAmounts, setEstimatedGasAmounts] = useState([]);
+  const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false);
   const [finishedTransactionCount, setFinishedTransactionCount] = useState(0);
   const [startTransfer, setStartTransfer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -264,7 +265,14 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
 
   const increaseFinishedTransactionCount = () => setFinishedTransactionCount(finishedTransactionCount + 1);
 
-  const proceedTransfer = () => setStartTransfer(true);
+  const confirmTransfer = () => setIsConfirmingTransfer(true);
+
+  const closeConfirmTransfer = () => setIsConfirmingTransfer(false);
+
+  const proceedTransfer = () => {
+    closeConfirmTransfer()
+    setStartTransfer(true);
+  }
 
   const handleDialogClose = () => {
     setFailedAddresses(null);
@@ -331,6 +339,23 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
           </DialogActions>
         </CustomDialog>
       )}
+      {isConfirmingTransfer && (
+        <CustomDialog onClose={closeConfirmTransfer} open={isConfirmingTransfer} maxWidth="md">
+          <CustomDialogTitle onClose={closeConfirmTransfer}>
+            {transactionCount} transaction(s) will be executed
+          </CustomDialogTitle>
+          <DialogContent>
+            Please make sure to click confirm button {transactionCount} time(s) on Metamask.
+          </DialogContent>
+          <DialogActions>
+            <Box m={2}>
+              <CustomButton autoFocus onClick={proceedTransfer} variant="contained" color="primary">
+                OK
+              </CustomButton>
+            </Box>
+          </DialogActions>
+        </CustomDialog>
+      )}
       <Box style={{ width: "600px" }} m={2}>
         {!!recipientChunks.length && (
           <>
@@ -379,7 +404,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
                 >
                   Back
                 </CustomButton>
-                <CustomButton variant="contained" color="primary" onClick={proceedTransfer} disabled={startTransfer || !estimatedCost}>
+                <CustomButton variant="contained" color="primary" onClick={confirmTransfer} disabled={startTransfer || !estimatedCost}>
                   Transfer
                 </CustomButton>
               </>

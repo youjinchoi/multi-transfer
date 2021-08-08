@@ -6,6 +6,7 @@ import CustomTextField from "./CustomTextField";
 import {makeStyles} from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import search from "../assets/search.png";
+import ErrorMessage from "./ErrorMessage";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -164,8 +165,8 @@ function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenIn
             <CustomTextField
               value={tokenInfo.balance}
               disabled
-              error={tokenInfo?.notEnoughBalance}
-              helperText={tokenInfo?.notEnoughBalance ? "token balance is less than total amount to transfer" : null}
+              error={activeStep === 1 && tokenInfo?.notEnoughBalance}
+              helperText={activeStep === 1 && tokenInfo?.notEnoughBalance ? <ErrorMessage text="token balance is less than total amount to transfer" /> : null}
             />
           </Box>
         </>

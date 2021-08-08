@@ -23,6 +23,7 @@ import MultiTransferer from "../abis/MultiTransferer.json";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import withStyles from "@material-ui/core/styles/withStyles";
 import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
+import ErrorMessage from "./ErrorMessage";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -89,6 +90,7 @@ const CustomTableCell = withStyles(() => ({
 function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
+  const [isExampleCsvVisible, setIsExampleCsvVisible] = useState(false);
   const [invalidInputs, setInvalidInputs] = useState(null);
   const [editorValue, setEditorValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -261,15 +263,25 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
     setTokenInfo({ ...tokenInfo, notEnoughBalance: false })
   }
 
+  const openExampleCsv = () => setIsExampleCsvVisible(true);
+
+  const closeExampleCsv = () => setIsExampleCsvVisible(false);
+
   return (
     <>
       <Box display="flex" justifyContent="center" flexDirection="column" p={1} className={classes.container} mb={2}>
-        <Box display="flex" justifyContent={(!!editorValue && activeStep === 0) ? "space-between" : "flex-start"} alignItems="center">
+        <Box display="flex" justifyContent={activeStep === 0 ? "space-between" : "flex-start"} alignItems="center">
           <Typography className={classes.label}>{activeStep === 0 ? "List of Addresses in CSV" : "Imported lines"}</Typography>
-          {(!!editorValue && activeStep === 0) && (
-            <Link onClick={discard} className={classes.discardButton}>
+          {activeStep === 0 && (
+            !!editorValue ? (
+              <Link onClick={discard} className={classes.discardButton}>
               Discard
             </Link>
+            ) : (
+              <Link onClick={openExampleCsv} className={classes.discardButton}>
+                Example CSV
+              </Link>
+            )
           )}
         </Box>
         <CodeMirror
@@ -304,6 +316,32 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
           {toast?.message}
         </MuiAlert>
       </Snackbar>
+      {isExampleCsvVisible && (
+        <CustomDialog onClose={closeExampleCsv} open={isExampleCsvVisible} maxWidth="md">
+          <CustomDialogTitle onClose={closeExampleCsv}>
+            Example CSV
+          </CustomDialogTitle>
+          <DialogContent>
+            <CodeMirror
+              value={"0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454,100\n0x092619459b1917d70ad78909962cb56603cb6831,1.5"}
+              options={{
+                lineSeparator: "\n",
+                lineNumbers: true,
+                readOnly: true,
+              }}
+              onChange={onCodeMirrorChange}
+              className="example"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Box m={2}>
+              <CustomButton autoFocus onClick={closeExampleCsv} variant="contained" color="primary">
+                OK
+              </CustomButton>
+            </Box>
+          </DialogActions>
+        </CustomDialog>
+      )}
       {!!invalidInputs?.length && (
         <CustomDialog onClose={handleClose} open={!!invalidInputs?.length} fullWidth={true} maxWidth="md">
           <CustomDialogTitle onClose={handleClose}>
@@ -334,7 +372,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
       <Box display="flex" justifyContent="center" mt={1} alignItems="center" flexDirection="column">
         {!isLoading && tokenApprovalErrorMessage && (
           <Box m={2}>
-            <Typography className={classes.tokenApprovalErrorMessage}>{tokenApprovalErrorMessage}</Typography>
+            <ErrorMessage text={tokenApprovalErrorMessage} />
           </Box>
         )}
         <Box display="flex" justifyContent="center">
@@ -347,7 +385,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
             <CustomButton
               variant="contained"
               color="primary"
-              disabled={isLoading}
+              disabled={isLoading || (activeStep === 1 && tokenInfo?.notEnoughBalance)}
               onClick={handleNext}
             >
               Next
