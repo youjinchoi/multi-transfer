@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Spreadsheet from "react-spreadsheet";
 import Box from '@material-ui/core/Box';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
@@ -86,6 +87,10 @@ const CustomTableCell = withStyles(() => ({
   },
 }))(TableCell);
 
+const exampleCsv = [
+  [{ value: "0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454" }, { value: "100" }],
+  [{ value: "0x092619459b1917d70ad78909962cb56603cb6831" }, { value: "1.5" }],
+];
 
 function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
@@ -322,16 +327,10 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
             Example CSV
           </CustomDialogTitle>
           <DialogContent>
-            <CodeMirror
-              value={"0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454,100\n0x092619459b1917d70ad78909962cb56603cb6831,1.5"}
-              options={{
-                lineSeparator: "\n",
-                lineNumbers: true,
-                readOnly: true,
-              }}
-              onChange={onCodeMirrorChange}
-              className="example"
-            />
+            <Box my={1}>
+              <Typography>Input recipient wallet address at first column, token amount at second column</Typography>
+            </Box>
+            <Spreadsheet data={exampleCsv} />
           </DialogContent>
           <DialogActions>
             <Box m={2}>
