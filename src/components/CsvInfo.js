@@ -328,7 +328,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
           </CustomDialogTitle>
           <DialogContent>
             <Box my={1}>
-              <Typography>Input recipient wallet address at first column, token amount at second column</Typography>
+              <Typography>Input recipient wallet address at 1st column, token amount at 2nd column</Typography>
             </Box>
             <Spreadsheet data={exampleCsv} />
           </DialogContent>
