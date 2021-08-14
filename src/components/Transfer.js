@@ -6,6 +6,7 @@ import { Box, Button, Divider, Step, StepLabel, Stepper, Typography } from '@mat
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
 import clsx from "clsx";
+import bsc from "../assets/bsc.svg";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -57,6 +58,11 @@ const useStyles = makeStyles((theme) => ({
     right: 'calc(10%)',
     backgroundColor: "#fff",
     height: 3,
+  },
+  networkLogo: {
+    width: 20,
+    height: 20,
+    marginRight: 4,
   },
 }));
 
@@ -129,7 +135,7 @@ function CustomStepIcon(props) {
 
 const steps = ['Input transfer details', 'Review', 'Transfer'];
 
-function Transfer({ web3, account, networkId }) {
+function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -209,8 +215,11 @@ function Transfer({ web3, account, networkId }) {
           ))}
         </Stepper>
       </Box>
-      <Box m={1}>
+      <Box>
         <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>TokenBlast</strong></Typography>
+        <Box mt={2} mb={1} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
+          <img src={bsc} alt="bsc logo" className={classes.networkLogo} /><Typography>Binance Smart Chain</Typography>
+        </Box>
       </Box>
       <div>
         <Box>
@@ -218,10 +227,12 @@ function Transfer({ web3, account, networkId }) {
             web3={web3}
             account={account}
             networkId={networkId}
+            covacBalanceStr={covacBalanceStr}
             activeStep={activeStep}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
+            connectWallet={connectWallet}
           />
           {activeStep > 0 && (
             <>

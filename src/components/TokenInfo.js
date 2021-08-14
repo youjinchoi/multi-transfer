@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {Box, CircularProgress, Typography} from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
@@ -7,6 +7,10 @@ import {makeStyles} from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import search from "../assets/search.png";
 import ErrorMessage from "./ErrorMessage";
+import {CustomDialog, CustomDialogTitle} from "./CustomDialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import CustomButton from "./CustomButton";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -52,10 +56,28 @@ const useStylesInput = makeStyles((theme) => ({
   },
 }));
 
-function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
+function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const inputClasses = useStylesInput();
   const [isLoading, setIsLoading] = useState(false);
+  const [showConnectWalletMessage, setShowConnectWalletMessage] = useState(false);
+  const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
+
+  const isNotEnoughCovac = useMemo(() => Number(covacBalanceStr) < 1000000, [covacBalanceStr]);
+
+  const onTokenAddressClick = () => {
+    if (!account) {
+      setShowConnectWalletMessage(true);
+      return;
+    }
+    if (isNotEnoughCovac) {
+      console.log("insufficient balance");
+      setShowBuyCovacMessage(true);
+      return;
+    }
+  }
+
+  const hideConnectWalletMessage = () => setShowConnectWalletMessage(false);
 
   const onTokenAddressChange = async (e) => {
     const value = e?.target?.value;
@@ -108,6 +130,18 @@ function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenIn
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenInfo?.balanceBN, totalAmountWithDecimalsBN]);
 
+  const onClickConnectWallet = () => {
+    connectWallet();
+    hideConnectWalletMessage();
+  }
+
+  const hideBuyCovacMessage = () => setShowBuyCovacMessage(false);
+
+  const onClickBuyCovac = () => {
+    window.open("https://pancakeswap.finance/swap?inputCurrency=BNB&outputCurrency=0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454&exactAmount=1111112&exactField=outPUT");
+    hideBuyCovacMessage();
+  }
+
   return (
     <Box>
       <Box display="flex" justifyContent="center" m={1} flexDirection="column">
@@ -115,8 +149,9 @@ function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenIn
           <Typography className={classes.label}>Token Address</Typography>
         </Box>
         <CustomTextField
+          onClick={onTokenAddressClick}
           onChange={onTokenAddressChange}
-          disabled={activeStep !== 0}
+          disabled={!account || isNotEnoughCovac || activeStep !== 0}
           InputProps={{
             classes: inputClasses,
             startAdornment: (
@@ -128,8 +163,42 @@ function TokenInfo({ web3, account, networkId, activeStep, tokenInfo, setTokenIn
             placeholder: "Input your Token Address",
           }}
           error={tokenInfo?.isValid === false}
-          helperText={tokenInfo?.isValid === false ? tokenInfo?.errorMessage : null}
+          helperText={tokenInfo?.isValid === false ? <ErrorMessage text={tokenInfo?.errorMessage} /> : null}
         />
+        {showConnectWalletMessage && (
+          <CustomDialog onClose={hideConnectWalletMessage} open={showConnectWalletMessage} maxWidth="md">
+            <CustomDialogTitle onClose={hideConnectWalletMessage}>
+              Metamask wallet is not connected
+            </CustomDialogTitle>
+            <DialogContent>
+              <Typography>Please connect your Metamask wallet to proceed</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Box m={2}>
+                <CustomButton autoFocus onClick={onClickConnectWallet} variant="contained" color="primary">
+                  Connect
+                </CustomButton>
+              </Box>
+            </DialogActions>
+          </CustomDialog>
+        )}
+        {showBuyCovacMessage && (
+          <CustomDialog onClose={hideBuyCovacMessage} open={showBuyCovacMessage} maxWidth="md">
+            <CustomDialogTitle onClose={hideBuyCovacMessage}>
+              Insufficient $COVAC balance
+            </CustomDialogTitle>
+            <DialogContent>
+              <Typography>Minimun 1,000,000 $COVAC in your wallet is required to proceed</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Box m={2}>
+                <CustomButton autoFocus onClick={onClickBuyCovac} variant="contained" color="primary">
+                  Buy On Pancakeswap
+                </CustomButton>
+              </Box>
+            </DialogActions>
+          </CustomDialog>
+        )}
       </Box>
       {isLoading && (
         <Box m={1} mt={2} display="flex" justifyContent="center">

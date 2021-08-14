@@ -25,6 +25,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import withStyles from "@material-ui/core/styles/withStyles";
 import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
 import ErrorMessage from "./ErrorMessage";
+import clsx from "clsx";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -95,6 +96,8 @@ const exampleCsv = [
 function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
+  const [showInputTokenAddressMessage, setShowInputTokenAddressMessage] = useState(false);
+  const [showUploadCsvMessage, setShowUploadCsvMessage] = useState(false);
   const [isExampleCsvVisible, setIsExampleCsvVisible] = useState(false);
   const [invalidInputs, setInvalidInputs] = useState(null);
   const [editorValue, setEditorValue] = useState("");
@@ -138,6 +141,9 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
     invalidLines.sort((a, b) => a.lineNumber - b.lineNumber);
     setInvalidInputs(invalidLines);
     setValidInputs(validLines);
+    if (showUploadCsvMessage) {
+      setShowUploadCsvMessage(false);
+    }
   }
 
   useEffect(() => {
@@ -190,8 +196,8 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
   const handleClose = () => setInvalidInputs(null);
 
   const handleStep1ToStep2 = () => {
-    if (!tokenInfo) {
-      setTokenInfo({ isValid: false, errorMessage: "Please input the token address" });
+    if (!tokenInfo || !tokenInfo.address) {
+      setTokenInfo({ isValid: false, errorMessage: "Please input token address" });
       return;
     }
 
@@ -200,6 +206,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
     }
 
     if (!validInputs?.length) {
+      setShowUploadCsvMessage(true);
       return;
     }
     const recipientInfo = validInputs.map(({ line }) => ({ address: line[0], amount: line[1] }));
@@ -272,6 +279,15 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
 
   const closeExampleCsv = () => setIsExampleCsvVisible(false);
 
+  const onClickUploadCsv = e => {
+    if (!tokenInfo?.address) {
+      e.nativeEvent.preventDefault();
+      setShowInputTokenAddressMessage(true);
+    }
+  }
+
+  const hideInputTokenAddressMessage = () => setShowInputTokenAddressMessage(false);
+
   return (
     <>
       <Box display="flex" justifyContent="center" flexDirection="column" p={1} className={classes.container} mb={2}>
@@ -293,11 +309,12 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
           value={editorValue}
           options={{
             lineNumbers: true,
-            readOnly: false,
+            readOnly: true,
           }}
           onChange={onCodeMirrorChange}
-          className={activeStep === 1 ? "Step2-line" : ""}
+          className={clsx({ "Step2-line": activeStep === 1, "error": !invalidInputs?.length && showUploadCsvMessage })}
         />
+        {!invalidInputs?.length && showUploadCsvMessage && <ErrorMessage text="Please upload csv file" />}
         {activeStep === 0 && (
           <Box display="flex" justifyContent="flex-start" mt={4}>
             <input
@@ -309,7 +326,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
               type="file"
             />
             <label htmlFor="csv-upload">
-              <CustomButton variant="contained" color="primary" component="span">
+              <CustomButton onClick={onClickUploadCsv} variant="contained" color="primary" component="span">
                 Upload CSV file
               </CustomButton>
             </label>
@@ -321,6 +338,23 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
           {toast?.message}
         </MuiAlert>
       </Snackbar>
+      {showInputTokenAddressMessage && (
+        <CustomDialog onClose={hideInputTokenAddressMessage} open={showInputTokenAddressMessage} maxWidth="md">
+          <CustomDialogTitle onClose={hideInputTokenAddressMessage}>
+            Token address is required
+          </CustomDialogTitle>
+          <DialogContent>
+            <Typography>Please input token address to proceed</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Box m={2}>
+              <CustomButton autoFocus onClick={hideInputTokenAddressMessage} variant="contained" color="primary">
+                OK
+              </CustomButton>
+            </Box>
+          </DialogActions>
+        </CustomDialog>
+      )}
       {isExampleCsvVisible && (
         <CustomDialog onClose={closeExampleCsv} open={isExampleCsvVisible} maxWidth="md">
           <CustomDialogTitle onClose={closeExampleCsv}>
