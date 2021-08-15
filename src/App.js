@@ -12,7 +12,7 @@ import tg_icon from "./assets/tg_icon.png";
 import website_icon from "./assets/website_icon.png";
 import Box from "@material-ui/core/Box";
 import Covac from "./abis/Covac.json";
-import {getBalanceStrWithDecimalsConsidered} from "./utils";
+import {getBalanceStrWithDecimalsConsidered, numberWithCommas} from "./utils";
 import clsx from "clsx";
 import {Typography} from "@material-ui/core";
 import frame_right from "./assets/frame_right.svg";
@@ -163,7 +163,7 @@ function App() {
             <Box ml={2} mb={3} display="flex" flexDirection="column">
               <Typography variant="caption" className={classes.headerButtonCaption}>Your $COVAC balance:</Typography>
               <Button variant="contained" size="small" disableRipple className={clsx(classes.headerButton, classes.covacBalance)} onClick={connectWallet}>
-                {covacBalanceStr}
+                {numberWithCommas(covacBalanceStr)}
               </Button>
             </Box>
           )}
