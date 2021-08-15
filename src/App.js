@@ -15,8 +15,32 @@ import Covac from "./abis/Covac.json";
 import {getBalanceStrWithDecimalsConsidered} from "./utils";
 import clsx from "clsx";
 import {Typography} from "@material-ui/core";
+import frame_right from "./assets/frame_right.svg";
+import frame_left from "./assets/frame_left.svg";
 
 const useStyles = makeStyles(() => ({
+  app: {
+    "&:before": {
+      backgroundImage: `url(${frame_left})`,
+      left: 100,
+      top: 58,
+      content: "''",
+      position: "absolute",
+      backgroundRepeat: "no-repeat",
+      height: 1000,
+      width: "100%",
+    },
+    "&:after": {
+      backgroundImage: `url(${frame_right})`,
+      left: "calc(100% - 410px)",
+      top: 153,
+      content: "''",
+      position: "absolute",
+      backgroundRepeat: "no-repeat",
+      height: 905,
+      width: "100%",
+    },
+  },
   header: {
     backgroundColor: "transparent",
     height: 120,
@@ -119,7 +143,7 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className={classes.app}>
       <AppBar position="static" className={classes.header}>
         <img src={covac_log_white} height={30} alt="covac logo" />
         <Box display="flex" flexDirection="row" alignItems="center" my={3}>
