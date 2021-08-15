@@ -29,6 +29,7 @@ const useStyles = makeStyles(() => ({
       backgroundRepeat: "no-repeat",
       height: 1000,
       width: "100%",
+      zIndex: -1,
     },
     "&:after": {
       backgroundImage: `url(${frame_right})`,
@@ -39,6 +40,7 @@ const useStyles = makeStyles(() => ({
       backgroundRepeat: "no-repeat",
       height: 905,
       width: "100%",
+      zIndex: -1,
     },
   },
   header: {
