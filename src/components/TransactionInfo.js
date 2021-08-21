@@ -363,7 +363,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
           </DialogActions>
         </CustomDialog>
       )}
-      <Box m={2} px={2} width="100%">
+      <Box m={2} width="100%">
         {!!recipientChunks.length && (
           <Box m={1}>
             {startTransfer && <Typography className={classes.label}>Transactions</Typography>}
