@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import Box from '@material-ui/core/Box';
-import {Link, Typography, useMediaQuery} from "@material-ui/core";
+import { Typography, useMediaQuery } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/keymap/sublime';
@@ -80,7 +80,6 @@ const useStyles = makeStyles(() => ({
 
 function Header({ web3, account, setAccount, networkId, connectWallet, covacBalanceStr, setCovacBalanceStr }) {
   const classes = useStyles();
-  const isMobile = useMediaQuery("(max-width: 600px)");
   const showLinks = useMediaQuery("(min-width: 1000px)");
   const showWalletInfo = useMediaQuery("(min-width: 860px)");
   const [isWalletInfoMobileExpanded, setIsWalletInfoMobileExpanded] = useState(false);
@@ -97,6 +96,7 @@ function Header({ web3, account, setAccount, networkId, connectWallet, covacBala
     if (account && web3 && networkId) {
       getCovacBalance();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, web3, networkId]);
 
   const toggleWalletInfoMobile = () => setIsWalletInfoMobileExpanded(!isWalletInfoMobileExpanded);
@@ -111,6 +111,7 @@ function Header({ web3, account, setAccount, networkId, connectWallet, covacBala
         </Button>
       </Box>
     )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account])
 
   const renderCovacBalance = useCallback(() => {
@@ -125,6 +126,7 @@ function Header({ web3, account, setAccount, networkId, connectWallet, covacBala
         </Button>
       </Box>
     )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, covacBalanceStr])
 
   return (
