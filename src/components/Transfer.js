@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import CsvInfo from './CsvInfo';
 import TransactionInfo from './TransactionInfo';
@@ -151,6 +151,9 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
   const [transactionCount, setTransactionCount] = useState(null);
   const [totalAmount, setTotalAmount] = useState(null);
   const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] = useState(null);
+  const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
+
+  const isNotEnoughCovac = useMemo(() => Number(covacBalanceStr) < 1000000, [covacBalanceStr]);
 
   const reset = () => {
     setActiveStep(0);
@@ -231,12 +234,14 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
             web3={web3}
             account={account}
             networkId={networkId}
-            covacBalanceStr={covacBalanceStr}
+            isNotEnoughCovac={isNotEnoughCovac}
             activeStep={activeStep}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
             connectWallet={connectWallet}
+            showBuyCovacMessage={showBuyCovacMessage}
+            setShowBuyCovacMessage={setShowBuyCovacMessage}
           />
           {activeStep > 0 && (
             <>
@@ -254,6 +259,7 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
               web3={web3}
               account={account}
               networkId={networkId}
+              isNotEnoughCovac={isNotEnoughCovac}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
               validInputs={validInputs}
@@ -262,6 +268,7 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
               activeStep={activeStep}
               setActiveStep={setActiveStep}
               totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
+              setShowBuyCovacMessage={setShowBuyCovacMessage}
             />
           )}
           {activeStep > 1 && (

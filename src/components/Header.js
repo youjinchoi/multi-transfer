@@ -106,13 +106,13 @@ function Header({ web3, account, setAccount, networkId, connectWallet, covacBala
       <Box display="flex" flexDirection="column">
         {account && <Typography variant="caption" className={classes.headerButtonCaption}>Wallet address:</Typography>}
         <Button variant="contained" size="small" disableRipple className={classes.headerButton} onClick={connectWallet}>
-          {!showWalletInfo && <img src={covac_icon} alt="covac icon" className={classes.covacLogoInWalletAddress} />}
+          {showWalletInfo && <img src={covac_icon} alt="covac icon" className={classes.covacLogoInWalletAddress} />}
           {account ? account : "Connect"}
         </Button>
       </Box>
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account])
+  }, [account, showWalletInfo])
 
   const renderCovacBalance = useCallback(() => {
     if (!account || !covacBalanceStr) {

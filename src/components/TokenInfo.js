@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useMemo} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, CircularProgress, Typography, useMediaQuery} from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
@@ -11,6 +11,8 @@ import {CustomDialog, CustomDialogTitle} from "./CustomDialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import CustomButton from "./CustomButton";
+import Tooltip from "@material-ui/core/Tooltip";
+import {numberWithCommas} from "../utils";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -44,6 +46,9 @@ const useStyles = makeStyles((theme) => ({
       textAlign: "center",
     },
   },
+  tooltip: {
+    fontSize: 12,
+  }
 }));
 
 const useStylesInput = makeStyles((theme) => ({
@@ -65,16 +70,13 @@ const useStylesInput = makeStyles((theme) => ({
   },
 }));
 
-function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN }) {
+function TokenInfo({ web3, account, networkId, isNotEnoughCovac, connectWallet, activeStep, tokenInfo, setTokenInfo, totalAmountWithDecimalsBN, showBuyCovacMessage, setShowBuyCovacMessage }) {
   const classes = useStyles();
   const inputClasses = useStylesInput();
   const [isLoading, setIsLoading] = useState(false);
   const [showConnectWalletMessage, setShowConnectWalletMessage] = useState(false);
-  const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
 
   const isTokenInfoGrid = useMediaQuery("(min-width: 620px)");
-
-  const isNotEnoughCovac = useMemo(() => Number(covacBalanceStr) < 1000000, [covacBalanceStr]);
 
   const onTokenAddressClick = () => {
     if (!account) {
@@ -82,13 +84,40 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
       return;
     }
     if (isNotEnoughCovac) {
-      console.log("insufficient balance");
       setShowBuyCovacMessage(true);
       return;
     }
   }
 
   const hideConnectWalletMessage = () => setShowConnectWalletMessage(false);
+
+  const getTokenBalance = async (contract) => {
+    const decimals = await contract.methods.decimals().call();
+    const balance = account ? await contract.methods.balanceOf(account).call() : null;
+    let adjustedBalance = null;
+    let balanceBN = null;
+    if (balance) {
+      const decimalsBN = new web3.utils.BN(decimals);
+      balanceBN = new web3.utils.BN(balance);
+      const divisor = new web3.utils.BN(10).pow(decimalsBN);
+      const beforeDecimal = balanceBN.div(divisor);
+      const afterDecimal  = balanceBN.mod(divisor);
+      adjustedBalance = `${beforeDecimal.toString()}.${afterDecimal.toString()}`;
+    }
+    return { adjustedBalance, balanceBN };
+  }
+
+  useEffect(() => {
+    if (account && tokenInfo?.address && tokenInfo?.contract) {
+      const updateTokenBalance = async () => {
+        const { adjustedBalance, balanceBN } = await getTokenBalance(tokenInfo.contract);
+        console.log(adjustedBalance, balanceBN, tokenInfo);
+        setTokenInfo({...tokenInfo, balance: adjustedBalance, balanceBN });
+      }
+      updateTokenBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account])
 
   const onTokenAddressChange = async (e) => {
     const value = e?.target?.value;
@@ -97,7 +126,6 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
       return;
     }
     if (!Web3Utils.isAddress(value)) {
-      console.log("here");
       setTokenInfo({ isValid: false, errorMessage: "Invalid token address. please check again" });
       return;
     }
@@ -111,21 +139,12 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
       setIsLoading(false);
       return;
     }
+
     const contract = new web3.eth.Contract(abi, value);
     const decimals = await contract.methods.decimals().call();
     const name = await contract.methods.name().call();
     const symbol = await contract.methods.symbol().call();
-    const balance = account ? await contract.methods.balanceOf(account).call() : null;
-    let adjustedBalance = null;
-    let balanceBN = null;
-    if (balance) {
-      const decimalsBN = new web3.utils.BN(decimals);
-      balanceBN = new web3.utils.BN(balance);
-      const divisor = new web3.utils.BN(10).pow(decimalsBN);
-      const beforeDecimal = balanceBN.div(divisor);
-      const afterDecimal  = balanceBN.mod(divisor);
-      adjustedBalance = `${beforeDecimal.toString()}.${afterDecimal.toString()}`;
-    }
+    const { adjustedBalance, balanceBN } = await getTokenBalance(contract);
     setTokenInfo({ contract, address: value, name, symbol, decimals, balance: adjustedBalance, balanceBN, isValid: true });
     setIsLoading(false);
   };
@@ -149,7 +168,6 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
   const hideBuyCovacMessage = () => setShowBuyCovacMessage(false);
 
   const onClickBuyCovac = () => {
-    window.open("https://pancakeswap.finance/swap?inputCurrency=BNB&outputCurrency=0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454&exactAmount=1111112&exactField=outPUT");
     hideBuyCovacMessage();
   }
 
@@ -199,13 +217,18 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
               Insufficient $COVAC balance
             </CustomDialogTitle>
             <DialogContent>
-              <Typography>Minimun 1,000,000 $COVAC in your wallet is required to proceed</Typography>
+              <Typography>Minimum 1,000,000 $COVAC in your wallet is required to proceed</Typography>
             </DialogContent>
             <DialogActions>
-              <Box m={2}>
-                <CustomButton autoFocus onClick={onClickBuyCovac} variant="contained" color="primary">
-                  Buy On Pancakeswap
-                </CustomButton>
+              <Box m={2} mt={4}>
+                <Tooltip title="$COVAC amount is auto-calculated considering 10% tax" placement="top-end" open={true} arrow classes={{ tooltip: classes.tooltip }}>
+                  <CustomButton
+                    href="https://pancakeswap.finance/swap?inputCurrency=BNB&outputCurrency=0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454&exactAmount=1111112&exactField=outPUT"
+                    target="_blank"
+                    onClick={onClickBuyCovac} variant="contained" color="primary">
+                    Buy On Pancakeswap
+                  </CustomButton>
+                </Tooltip>
               </Box>
             </DialogActions>
           </CustomDialog>
@@ -243,7 +266,7 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
               <Typography className={classes.label}>Token Balance of Connected Wallet</Typography>
             </Box>
             <CustomTextField
-              value={tokenInfo.balance}
+              value={numberWithCommas(tokenInfo.balance)}
               disabled
               error={activeStep === 1 && tokenInfo?.notEnoughBalance}
               helperText={activeStep === 1 && tokenInfo?.notEnoughBalance ? <ErrorMessage text="token balance is less than total amount to transfer" /> : null}

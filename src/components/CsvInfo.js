@@ -90,7 +90,7 @@ const exampleCsv = [
   [{ value: "0x092619459b1917d70ad78909962cb56603cb6831" }, { value: "1.5" }],
 ];
 
-function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN }) {
+function CsvInfo({ web3, account, networkId, isNotEnoughCovac, tokenInfo, setTokenInfo, validInputs, setValidInputs, setRecipientInfo, activeStep, setActiveStep, totalAmountWithDecimalsBN, setShowBuyCovacMessage }) {
   const classes = useStyles();
   const [toast, setToast] = useState(null);
   const [showInputTokenAddressMessage, setShowInputTokenAddressMessage] = useState(false);
@@ -255,6 +255,11 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
   }
 
   const handleNext = () => {
+    if (isNotEnoughCovac) {
+      setShowBuyCovacMessage(true);
+      return;
+    }
+
     if (activeStep === 0) {
       handleStep1ToStep2();
     } else if (activeStep === 1) {
