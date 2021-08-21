@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useMemo} from 'react';
-import {Box, CircularProgress, Typography} from '@material-ui/core';
+import {Box, CircularProgress, Typography, useMediaQuery} from '@material-ui/core';
 import Web3Utils from "web3-utils";
 import { getContractABI } from "../apis/bscscan";
 import CustomTextField from "./CustomTextField";
@@ -18,6 +18,15 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 8,
     marginBottom: 8,
   },
+  tokenInfoGrid: {
+    display: "flex",
+    flexDirection: "column",
+    width: 190,
+  },
+  tokenInfoDescription: {
+    display: "flex",
+    justifyContent: "flex-start",
+  },
   tokenAddress: {
     background: "#F9FAFB",
     border: "0.6px solid #E5E7EB",
@@ -30,9 +39,9 @@ const useStyles = makeStyles((theme) => ({
     color: "#FFFFFF",
   },
   inputAlignCenter: {
+    width: "100%",
     "& input": {
       textAlign: "center",
-      width: 150,
     },
   },
 }));
@@ -62,6 +71,8 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
   const [isLoading, setIsLoading] = useState(false);
   const [showConnectWalletMessage, setShowConnectWalletMessage] = useState(false);
   const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
+
+  const isTokenInfoGrid = useMediaQuery("(min-width: 620px)");
 
   const isNotEnoughCovac = useMemo(() => Number(covacBalanceStr) < 1000000, [covacBalanceStr]);
 
@@ -207,25 +218,25 @@ function TokenInfo({ web3, account, networkId, covacBalanceStr, connectWallet, a
       )}
       {!isLoading && !!tokenInfo && tokenInfo.isValid && (
         <>
-          <Box display="flex" justifyContent="space-between" p={1}>
-            <Box>
-              <Box display="flex" justifyContent="flex-start">
+          <Box display={isTokenInfoGrid ? "flex" : "block"} justifyContent="space-between" p={1}>
+            <div className={isTokenInfoGrid && classes.tokenInfoGrid}>
+              <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Name</Typography>
-              </Box>
+              </div>
               <CustomTextField value={tokenInfo.name} disabled m={1} className={classes.inputAlignCenter} />
-            </Box>
-            <Box>
-              <Box display="flex" justifyContent="flex-start">
+            </div>
+            <div className={isTokenInfoGrid && classes.tokenInfoGrid}>
+              <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Symbol</Typography>
-              </Box>
+              </div>
               <CustomTextField value={tokenInfo.symbol} disabled m={1} className={classes.inputAlignCenter} />
-            </Box>
-            <Box>
-              <Box display="flex" justifyContent="flex-start">
+            </div>
+            <div className={isTokenInfoGrid && classes.tokenInfoGrid}>
+              <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Decimals</Typography>
-              </Box>
+              </div>
               <CustomTextField value={tokenInfo.decimals} disabled m={1} className={classes.inputAlignCenter} />
-            </Box>
+            </div>
           </Box>
           <Box display="flex" justifyContent="center" flexDirection="column" m={1}>
             <Box display="flex" justifyContent="flex-start">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, CircularProgress, Table, TableBody, Typography } from '@material-ui/core';
+import {Box, CircularProgress, Table, TableBody, Typography, useMediaQuery} from '@material-ui/core';
 import chunk from "lodash/chunk";
 import sum from "lodash/sum";
 import MultiTransferer from "../abis/MultiTransferer.json";
@@ -36,8 +36,13 @@ const useStyles = makeStyles((theme) => ({
   loading: {
     color: "#FFFFFF",
   },
+  transactionInfoGrid: {
+    display: "flex",
+    flexDirection: "column",
+    width: 190,
+  },
   inputAlignCenter: {
-    width: 180,
+    width: "100%",
     "& div": {
       backgroundColor: "#FFE267",
       border: "0.6px solid #E5E7EB",
@@ -98,6 +103,8 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
   const [calculatingMessage, setCalculatingMessage] = useState("Calculating Transaction Count");
   const [failedAddresses, setFailedAddresses] = useState(null);
   const [estimatedTransactionCount, setEstimatedTransactionCount] = useState(null);
+
+  const isGrid = useMediaQuery("(min-width: 620px)");
 
   const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
   const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
@@ -286,8 +293,8 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
           <CircularProgress className={classes.loading} />
         </Box>
       ) : (
-        <Box display="flex" justifyContent="center">
-          <Box m={1}>
+        <Box display={isGrid ? "flex" : "block"} justifyContent="center" width="100%">
+          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
             <Typography className={classes.label}>Total Transaction Count</Typography>
             <CustomTextField
               disabled
@@ -295,7 +302,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
               className={classes.inputAlignCenter}
             />
           </Box>
-          <Box m={1}>
+          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
             <Typography className={classes.label}>Gas Price(Gwei)</Typography>
             <CustomTextField
               disabled
@@ -303,7 +310,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
               className={classes.inputAlignCenter}
             />
           </Box>
-          <Box m={1}>
+          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
             <Typography className={classes.label}>Estimated BNB Cost</Typography>
             <CustomTextField
               disabled
@@ -356,9 +363,9 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
           </DialogActions>
         </CustomDialog>
       )}
-      <Box style={{ width: "600px" }} m={2}>
+      <Box m={2} px={2} width="100%">
         {!!recipientChunks.length && (
-          <>
+          <Box m={1}>
             {startTransfer && <Typography className={classes.label}>Transactions</Typography>}
             <Table size="small" className={classes.table}>
               <TableBody>
@@ -379,12 +386,12 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
                 ))}
               </TableBody>
             </Table>
-          </>
+          </Box>
         )}
         {recipientChunks?.length && finishedTransactionCount === recipientChunks?.length && (
           <Box m={2} display="flex" alignItems="center" flexDirection="column">
             <Typography variant="h6">💉💉💉 Congratulations 💉💉💉</Typography>
-            <Typography variant="h6">You have succesfully finished your transfers</Typography>
+            <Typography variant="h6" align="center">You have succesfully finished your transfers</Typography>
           </Box>
         )}
         <Box display="flex" justifyContent="center" m={2}>
@@ -394,7 +401,7 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
                 <CustomButton variant="contained" color="primary" onClick={reset}>
                   New Transaction
                 </CustomButton>
-                <img src={transfer_success} alt="transfer success" />
+                <img src={transfer_success} alt="transfer success" width="100%" />
               </Box>
             ) : (
               <>

@@ -10,7 +10,8 @@ import bsc from "../assets/bsc.svg";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    width: '100%',
+    maxWidth: 610,
+    width: "100%",
   },
   backButton: {
     marginRight: theme.spacing(1),
@@ -21,7 +22,9 @@ const useStyles = makeStyles((theme) => ({
   },
   stepper: {
     backgroundColor: "transparent",
-    width: 615,
+    width: "100%",
+    padding: 0,
+    margin: "24px 0",
   },
   stepLabel: {
     color: "#FFFFFF",
@@ -33,6 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
   welcomeMessage: {
     color: "#FFFFFF",
+    textAlign: "center",
   },
   button: {
     background: "#EC008C",
@@ -198,7 +202,7 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
 
   return (
     <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1} mb={8}>
-      <Box my={2}>
+      <Box my={2} className={classes.root}>
         <Stepper activeStep={activeStep} alternativeLabel className={classes.stepper} connector={() => {}}>
           {steps.map((label, index) => (
             <Step key={label}>
@@ -215,13 +219,13 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
           ))}
         </Stepper>
       </Box>
-      <Box>
+      <Box className={classes.root}>
         <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>TokenBlast</strong></Typography>
         <Box mt={2} mb={1} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
           <img src={bsc} alt="bsc logo" className={classes.networkLogo} /><Typography>Binance Smart Chain</Typography>
         </Box>
       </Box>
-      <div>
+      <div className={classes.root}>
         <Box>
           <TokenInfo
             web3={web3}

@@ -19,6 +19,7 @@ const useStyles = makeStyles(() => ({
     "& a": {
       fontSize: 13
     },
+    overflowWrap: "anywhere",
   },
   iconCell: {
     width: 20,

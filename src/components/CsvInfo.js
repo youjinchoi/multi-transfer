@@ -31,9 +31,6 @@ const useStyles = makeStyles(() => ({
   fileUpload: {
     cursor: 'pointer',
   },
-  container: {
-    width: 600,
-  },
   label: {
     color: "#FFFFFF",
     marginTop: 8,
@@ -290,7 +287,7 @@ function CsvInfo({ web3, account, networkId, tokenInfo, setTokenInfo, validInput
 
   return (
     <>
-      <Box display="flex" justifyContent="center" flexDirection="column" p={1} className={classes.container} mb={2}>
+      <Box display="flex" justifyContent="center" flexDirection="column" p={1} mb={2}>
         <Box display="flex" justifyContent={activeStep === 0 ? "space-between" : "flex-start"} alignItems="center">
           <Typography className={classes.label}>{activeStep === 0 ? "List of Addresses in CSV" : "Imported lines"}</Typography>
           {activeStep === 0 && (
