@@ -18,7 +18,7 @@ const useStyles = makeStyles(() => ({
       position: "absolute",
       backgroundRepeat: "no-repeat",
       height: 1000,
-      width: "100%",
+      width: 310,
       zIndex: -1,
     },
     "&:after": {
@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
       position: "absolute",
       backgroundRepeat: "no-repeat",
       height: 905,
-      width: "100%",
+      width: 310,
       zIndex: -1,
     },
   }
@@ -42,7 +42,7 @@ function App() {
   const [networkId, setNetworkId] = useState(null);
   const [covacBalanceStr, setCovacBalanceStr] = useState(null);
 
-  const showBackgroundImage = useMediaQuery("(min-width: 1000px)");
+  const showBackgroundImage = useMediaQuery("(min-width: 1500px)");
 
   useEffect(() => {
     const init = async () => {
