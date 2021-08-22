@@ -5,7 +5,7 @@ import { getContractABI } from "../apis/bscscan";
 import CustomTextField from "./CustomTextField";
 import {makeStyles} from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import search from "../assets/search.png";
+import search from "../assets/search.svg";
 import ErrorMessage from "./ErrorMessage";
 import {CustomDialog, CustomDialogTitle} from "./CustomDialog";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -48,7 +48,10 @@ const useStyles = makeStyles((theme) => ({
   },
   tooltip: {
     fontSize: 12,
-  }
+  },
+  searchIconError: {
+    filter: "invert(8%) sepia(97%) saturate(7218%) hue-rotate(349deg) brightness(79%) contrast(104%)",
+  },
 }));
 
 const useStylesInput = makeStyles((theme) => ({
@@ -185,7 +188,7 @@ function TokenInfo({ web3, account, networkId, isNotEnoughCovac, connectWallet, 
             classes: inputClasses,
             startAdornment: (
               <InputAdornment position="start">
-                <img src={search} width={30} height={30} alt="search icon" />
+                <img src={search} width={30} height={30} alt="search icon" className={tokenInfo?.isValid === false ? classes.searchIconError : ""} />
               </InputAdornment>
             ),
             disableUnderline: true,

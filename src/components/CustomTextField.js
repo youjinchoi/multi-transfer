@@ -30,14 +30,16 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-function CustomTextField({ InputProps, ...rest}) {
+function CustomTextField({ InputProps = {}, ...rest}) {
   const classes = useStyles();
+  const { classes: inputClasses, ...restInputProps } = InputProps;
 
   return (
     <TextField
       InputProps={{
-        classes: {...InputProps?.classes, ...classes},
+        classes: {...inputClasses, ...classes},
         disableUnderline: true,
+        ...restInputProps
       }}
       {...rest}
     />

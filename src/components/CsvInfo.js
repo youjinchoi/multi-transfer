@@ -73,6 +73,7 @@ const useStyles = makeStyles(() => ({
   discardButton: {
     color: "#ffffff",
     cursor: "pointer",
+    margin: "8px 0",
   },
   tokenApprovalErrorMessage: {
     color: "#f44336",
