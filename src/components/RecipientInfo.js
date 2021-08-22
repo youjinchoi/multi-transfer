@@ -1,6 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { withStyles, makeStyles } from '@material-ui/core/styles';
-import { Box, TablePagination, TableRow, TableHead, TableContainer, TableCell, TableBody, Table } from '@material-ui/core';
+import React, { useState, useEffect } from "react";
+import { withStyles, makeStyles } from "@material-ui/core/styles";
+import {
+  Box,
+  TablePagination,
+  TableRow,
+  TableHead,
+  TableContainer,
+  TableCell,
+  TableBody,
+  Table,
+} from "@material-ui/core";
 import MultiTransferer from "../abis/MultiTransferer.json";
 import CustomButton from "./CustomButton";
 
@@ -16,7 +25,7 @@ const StyledTableCell = withStyles((theme) => ({
 
 const StyledTableRow = withStyles((theme) => ({
   root: {
-    '&:nth-of-type(odd)': {
+    "&:nth-of-type(odd)": {
       backgroundColor: theme.palette.action.hover,
     },
   },
@@ -28,7 +37,15 @@ const useStyles = makeStyles({
   },
 });
 
-function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep, tokenInfo, totalAmountWithDecimalsBN }) {
+function RecipientInfo({
+  web3,
+  account,
+  networkId,
+  recipientInfo,
+  setActiveStep,
+  tokenInfo,
+  totalAmountWithDecimalsBN,
+}) {
   const classes = useStyles();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -38,38 +55,41 @@ function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep,
 
   useEffect(() => {
     const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    tokenInfo.contract.methods.allowance(account, multiTransfererAddress).call()
-      .then(allowance => {
+    tokenInfo.contract.methods
+      .allowance(account, multiTransfererAddress)
+      .call()
+      .then((allowance) => {
         // console.log("allowance", allowance);
         if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
           setIsEnoughAllowances(true);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error);
-      })
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   const approveTokenAndProceed = () => {
     const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    tokenInfo.contract.methods.approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
+    tokenInfo.contract.methods
+      .approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
       .send({ from: account })
-      .on('transactionHash', hash => {
+      .on("transactionHash", (hash) => {
         // setApprovalTransactionHash(hash);
       })
-      .on('error', (error) => {
+      .on("error", (error) => {
         // setTokenApprovalErrorMessage(error?.message ?? "failed to approve token");
-        console.error(error)
+        console.error(error);
       })
-      .then(response => {
+      .then((response) => {
         if (response?.status) {
           setIsEnoughAllowances(true);
           // setApprovalTransactionHash(response?.transactionHash);
           setActiveStep(2);
         }
       });
-  }
+  };
 
   const handleNext = () => {
     if (isEnoughAllowances) {
@@ -77,7 +97,7 @@ function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep,
     } else {
       approveTokenAndProceed();
     }
-  }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -92,7 +112,9 @@ function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep,
     return null;
   }
 
-  const emptyRows = rowsPerPage - Math.min(rowsPerPage, recipientInfo.length - page * rowsPerPage);
+  const emptyRows =
+    rowsPerPage -
+    Math.min(rowsPerPage, recipientInfo.length - page * rowsPerPage);
 
   return (
     <Box display="flex" alignItems="center" flexDirection="column">
@@ -106,17 +128,21 @@ function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep,
               </TableRow>
             </TableHead>
             <TableBody>
-              {recipientInfo.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(({ address, amount }) => (
-                <StyledTableRow key={address}>
-                  <StyledTableCell>{address}</StyledTableCell>
-                  <StyledTableCell>{amount}</StyledTableCell>
-                </StyledTableRow>
-              ))}
-              {!!emptyRows && page > 0 && [ ...Array(emptyRows).keys()].map(item => (
-                <StyledTableRow key={`empty${item}`} style={{ height: 33 }}>
-                  <TableCell colSpan={2} />
-                </StyledTableRow>
-              ))}
+              {recipientInfo
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map(({ address, amount }) => (
+                  <StyledTableRow key={address}>
+                    <StyledTableCell>{address}</StyledTableCell>
+                    <StyledTableCell>{amount}</StyledTableCell>
+                  </StyledTableRow>
+                ))}
+              {!!emptyRows &&
+                page > 0 &&
+                [...Array(emptyRows).keys()].map((item) => (
+                  <StyledTableRow key={`empty${item}`} style={{ height: 33 }}>
+                    <TableCell colSpan={2} />
+                  </StyledTableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -133,7 +159,12 @@ function RecipientInfo({ web3, account, networkId, recipientInfo, setActiveStep,
       <div>
         <Box m={1}>
           <CustomButton onClick={() => setActiveStep(0)}>Back</CustomButton>
-          <CustomButton variant="contained" color="primary" onClick={handleNext} disabled={tokenInfo?.notEnoughBalance}>
+          <CustomButton
+            variant="contained"
+            color="primary"
+            onClick={handleNext}
+            disabled={tokenInfo?.notEnoughBalance}
+          >
             {isEnoughAllowances ? "Next" : "Approve"}
           </CustomButton>
         </Box>

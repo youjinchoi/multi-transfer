@@ -1,4 +1,4 @@
-import TextField from '@material-ui/core/TextField';
+import TextField from "@material-ui/core/TextField";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import React from "react";
 
@@ -9,14 +9,14 @@ const useStyles = makeStyles((theme) => ({
     border: "0.6px solid #E5E7EB",
     borderRadius: 15,
     background: "#F9FAFB",
-    color: '#00636C',
+    color: "#00636C",
     fontSize: 18,
   },
   input: {
-    '&::placeholder': {
-      color: '#00636C',
+    "&::placeholder": {
+      color: "#00636C",
       opacity: 1,
-    }
+    },
   },
   disabled: {
     color: "#00636C",
@@ -27,19 +27,19 @@ const useStyles = makeStyles((theme) => ({
     "& input": {
       color: "#B10015 !important",
     },
-  }
+  },
 }));
 
-function CustomTextField({ InputProps = {}, ...rest}) {
+function CustomTextField({ InputProps = {}, ...rest }) {
   const classes = useStyles();
   const { classes: inputClasses, ...restInputProps } = InputProps;
 
   return (
     <TextField
       InputProps={{
-        classes: {...inputClasses, ...classes},
+        classes: { ...inputClasses, ...classes },
         disableUnderline: true,
-        ...restInputProps
+        ...restInputProps,
       }}
       {...rest}
     />

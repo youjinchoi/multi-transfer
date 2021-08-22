@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@material-ui/core";
-import ErrorIcon from '@material-ui/icons/Error';
+import ErrorIcon from "@material-ui/icons/Error";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles(() => ({
@@ -25,7 +25,7 @@ function ErrorMessage({ text }) {
       <ErrorIcon className={classes.icon} />
       <Typography variant="body2">{text}</Typography>
     </Box>
-  )
+  );
 }
 
 export default ErrorMessage;

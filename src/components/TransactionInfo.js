@@ -1,6 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import {Box, CircularProgress, Table, TableBody, Typography, useMediaQuery} from '@material-ui/core';
+import React, { useState, useEffect, useMemo } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import {
+  Box,
+  CircularProgress,
+  Table,
+  TableBody,
+  Typography,
+  useMediaQuery,
+} from "@material-ui/core";
 import chunk from "lodash/chunk";
 import sum from "lodash/sum";
 import MultiTransferer from "../abis/MultiTransferer.json";
@@ -17,7 +24,7 @@ import TableCell from "@material-ui/core/TableCell";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    width: '100%',
+    width: "100%",
   },
   button: {
     marginTop: theme.spacing(1),
@@ -62,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
     },
     "&:last-child td:first-child": {
       borderBottomLeftRadius: 15,
-    }
+    },
   },
   lineNumberCell: {
     color: "#00636C",
@@ -90,7 +97,18 @@ const CustomTableCell = withStyles(() => ({
 
 const deadAddress = "0x0000000000000000000000000000000000000000";
 
-function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, setRecipientInfo, setActiveStep, transactionCount, setTransactionCount, reset }) {
+function TransactionInfo({
+  web3,
+  account,
+  networkId,
+  tokenInfo,
+  recipientInfo,
+  setRecipientInfo,
+  setActiveStep,
+  transactionCount,
+  setTransactionCount,
+  reset,
+}) {
   const classes = useStyles();
   const [recipientChunks, setRecipientChunks] = useState([]);
   const [validRecipientInfo, setValidRecipientInfo] = useState(null);
@@ -100,9 +118,12 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
   const [finishedTransactionCount, setFinishedTransactionCount] = useState(0);
   const [startTransfer, setStartTransfer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [calculatingMessage, setCalculatingMessage] = useState("Calculating Transaction Count");
+  const [calculatingMessage, setCalculatingMessage] = useState(
+    "Calculating Transaction Count"
+  );
   const [failedAddresses, setFailedAddresses] = useState(null);
-  const [estimatedTransactionCount, setEstimatedTransactionCount] = useState(null);
+  const [estimatedTransactionCount, setEstimatedTransactionCount] =
+    useState(null);
 
   const isGrid = useMediaQuery("(min-width: 620px)");
 
@@ -111,39 +132,48 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
 
   useEffect(() => {
     const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+    const multiTransferer = new web3.eth.Contract(
+      MultiTransferer.abi,
+      multiTransfererAddress
+    );
 
     const chunks = chunk(recipientInfo, 10);
     const failedAddressSet = new Set();
     const filterOutFailedAddresses = async () => {
-      await Promise.all(chunks.map(async chunk => {
-        const addresses = [];
-        const amounts = [];
-        chunk.forEach(({ address, amount }) => {
-          addresses.push(address);
-          const amountBN = new web3.utils.BN(amount);
-          amounts.push(amountBN.mul(multiplierBN).toString());
-        });
-        const failedAddresses = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).call({
-          from: account,
-        });
-        failedAddresses.forEach(failed => {
-          if (failed !== deadAddress) {
-            failedAddressSet.add(failed);
-          }
-        });
-      }));
+      await Promise.all(
+        chunks.map(async (chunk) => {
+          const addresses = [];
+          const amounts = [];
+          chunk.forEach(({ address, amount }) => {
+            addresses.push(address);
+            const amountBN = new web3.utils.BN(amount);
+            amounts.push(amountBN.mul(multiplierBN).toString());
+          });
+          const failedAddresses = await multiTransferer.methods
+            .multiTransferToken(tokenInfo.address, addresses, amounts)
+            .call({
+              from: account,
+            });
+          failedAddresses.forEach((failed) => {
+            if (failed !== deadAddress) {
+              failedAddressSet.add(failed);
+            }
+          });
+        })
+      );
       console.log("final failedAddressSet", failedAddressSet);
       if (failedAddressSet.size > 0) {
         setFailedAddresses(Array.from(failedAddressSet));
-        const filtered = recipientInfo.filter(recipient => !failedAddressSet.has(recipient.address));
+        const filtered = recipientInfo.filter(
+          (recipient) => !failedAddressSet.has(recipient.address)
+        );
         console.log("filtered", filtered);
         setValidRecipientInfo(filtered);
         setRecipientInfo(filtered);
       } else {
         setValidRecipientInfo(recipientInfo);
       }
-    }
+    };
 
     filterOutFailedAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,11 +185,15 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
     }
     const checkGasFee = async (estimatedTransactionCount) => {
       console.log("checkGasFee", estimatedTransactionCount);
-      const testChunkSize = validRecipientInfo?.length / estimatedTransactionCount;
+      const testChunkSize =
+        validRecipientInfo?.length / estimatedTransactionCount;
       console.log("testChunkSize", testChunkSize);
       const testChunk = validRecipientInfo.slice(0, testChunkSize + 1);
       const multiTransfererAddress = MultiTransferer.addresses[networkId];
-      const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+      const multiTransferer = new web3.eth.Contract(
+        MultiTransferer.abi,
+        multiTransfererAddress
+      );
 
       const addresses = [];
       const amounts = [];
@@ -170,26 +204,34 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
       });
 
       try {
-        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({
-          from: account
-        })
-        web3.eth.estimateGas({
-          from: account,
-          data: encodedData,
-          gasPrice: gasPrice,
-          to: multiTransfererAddress,
-        })
-          .then(gasResult => {
+        const encodedData = await multiTransferer.methods
+          .multiTransferToken(tokenInfo.address, addresses, amounts)
+          .encodeABI({
+            from: account,
+          });
+        web3.eth
+          .estimateGas({
+            from: account,
+            data: encodedData,
+            gasPrice: gasPrice,
+            to: multiTransfererAddress,
+          })
+          .then((gasResult) => {
             console.log("gasResult", gasResult);
-            const value = Math.floor(validRecipientInfo?.length / estimatedTransactionCount);
+            const value = Math.floor(
+              validRecipientInfo?.length / estimatedTransactionCount
+            );
             const mod = validRecipientInfo?.length % estimatedTransactionCount;
-            const estimatedTransferPerTransaction = mod === 0 ? value : value + 1;
+            const estimatedTransferPerTransaction =
+              mod === 0 ? value : value + 1;
             setTransactionCount(estimatedTransactionCount);
-            setRecipientChunks(chunk(validRecipientInfo, estimatedTransferPerTransaction));
+            setRecipientChunks(
+              chunk(validRecipientInfo, estimatedTransferPerTransaction)
+            );
             setIsLoading(false);
           })
-          .catch(e => {
-            console.error("error occured", e)
+          .catch((e) => {
+            console.error("error occured", e);
             if (e.message.startsWith("gas required exceeds allowance")) {
               console.log("adjust transaction count");
               setEstimatedTransactionCount(estimatedTransactionCount + 1);
@@ -199,24 +241,31 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
         console.error(error);
         return;
       }
-    }
+    };
     checkGasFee(estimatedTransactionCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimatedTransactionCount]);
-
-
 
   useEffect(() => {
     if (validRecipientInfo?.length) {
       setCalculatingMessage("Calculating Estimated BNB Cost");
 
       const multiTransfererAddress = MultiTransferer.addresses[networkId];
-      const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+      const multiTransferer = new web3.eth.Contract(
+        MultiTransferer.abi,
+        multiTransfererAddress
+      );
 
       const getGasFee = async () => {
-        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, [multiTransfererAddress], [multiplierBN.toString()]).encodeABI({
-          from: account
-        })
+        const encodedData = await multiTransferer.methods
+          .multiTransferToken(
+            tokenInfo.address,
+            [multiTransfererAddress],
+            [multiplierBN.toString()]
+          )
+          .encodeABI({
+            from: account,
+          });
         const gasPriceResult = await web3.eth.getGasPrice();
         console.log("gasPrice", gasPriceResult);
         setGasPrice(gasPriceResult);
@@ -228,27 +277,37 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
             to: multiTransfererAddress,
           });
           console.log("gasResult", gasResult);
-          const estimatedTransferPerTransaction = Math.round(25000000 / (gasResult * 3));
-          console.log("estimatedTransferPerTransaction", estimatedTransferPerTransaction);
-          const value = Math.floor(validRecipientInfo?.length / estimatedTransferPerTransaction);
-          const mod = validRecipientInfo?.length % estimatedTransferPerTransaction;
+          const estimatedTransferPerTransaction = Math.round(
+            25000000 / (gasResult * 3)
+          );
+          console.log(
+            "estimatedTransferPerTransaction",
+            estimatedTransferPerTransaction
+          );
+          const value = Math.floor(
+            validRecipientInfo?.length / estimatedTransferPerTransaction
+          );
+          const mod =
+            validRecipientInfo?.length % estimatedTransferPerTransaction;
           const estimatedTransactionCount = mod === 0 ? value : value + 1;
           console.log("estimated transaction count", estimatedTransactionCount);
           // setEstimatedTransactionCount(estimatedTransactionCount);
           console.log("estimated transaction count", estimatedTransactionCount);
           console.log("gasResult", gasResult);
           setTransactionCount(estimatedTransactionCount);
-          setRecipientChunks(chunk(validRecipientInfo, estimatedTransferPerTransaction));
+          setRecipientChunks(
+            chunk(validRecipientInfo, estimatedTransferPerTransaction)
+          );
           setIsLoading(false);
         } catch (e) {
           console.error(e);
         }
-      }
+      };
 
       getGasFee();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validRecipientInfo])
+  }, [validRecipientInfo]);
 
   const estimatedCost = useMemo(() => {
     if (estimatedGasAmounts.length !== recipientChunks.length || !gasPrice) {
@@ -256,46 +315,60 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
     }
 
     const totalGas = sum(estimatedGasAmounts);
-    const estimated = gasPrice / 1000000000000000000 * totalGas;
+    const estimated = (gasPrice / 1000000000000000000) * totalGas;
     console.log("estimated gas", estimated);
     return estimated;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimatedGasAmounts, gasPrice]);
 
-  const addEstimatedGasAmount = amount => {
+  const addEstimatedGasAmount = (amount) => {
     if (!amount) {
       return;
     }
     console.log("addEstimatedGasAmount", estimatedGasAmounts, amount);
     setEstimatedGasAmounts([...estimatedGasAmounts, amount]);
-  }
+  };
 
-  const increaseFinishedTransactionCount = () => setFinishedTransactionCount(finishedTransactionCount + 1);
+  const increaseFinishedTransactionCount = () =>
+    setFinishedTransactionCount(finishedTransactionCount + 1);
 
   const confirmTransfer = () => setIsConfirmingTransfer(true);
 
   const closeConfirmTransfer = () => setIsConfirmingTransfer(false);
 
   const proceedTransfer = () => {
-    closeConfirmTransfer()
+    closeConfirmTransfer();
     setStartTransfer(true);
-  }
+  };
 
   const handleDialogClose = () => {
     setFailedAddresses(null);
   };
 
   return (
-    <Box className={classes.root} display="flex" flexDirection="column" alignItems="center">
-      {isLoading || !estimatedCost? (
+    <Box
+      className={classes.root}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+    >
+      {isLoading || !estimatedCost ? (
         <Box display="flex" alignItems="center" flexDirection="column" my={2}>
-          <Typography className={classes.label}>{calculatingMessage}</Typography>
+          <Typography className={classes.label}>
+            {calculatingMessage}
+          </Typography>
           <CircularProgress className={classes.loading} />
         </Box>
       ) : (
-        <Box display={isGrid ? "flex" : "block"} justifyContent="center" width="100%">
+        <Box
+          display={isGrid ? "flex" : "block"}
+          justifyContent="center"
+          width="100%"
+        >
           <Box m={1} className={isGrid && classes.transactionInfoGrid}>
-            <Typography className={classes.label}>Total Transaction Count</Typography>
+            <Typography className={classes.label}>
+              Total Transaction Count
+            </Typography>
             <CustomTextField
               disabled
               value={transactionCount}
@@ -306,12 +379,14 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
             <Typography className={classes.label}>Gas Price(Gwei)</Typography>
             <CustomTextField
               disabled
-              value={(gasPrice / 1000000000)}
+              value={gasPrice / 1000000000}
               className={classes.inputAlignCenter}
             />
           </Box>
           <Box m={1} className={isGrid && classes.transactionInfoGrid}>
-            <Typography className={classes.label}>Estimated BNB Cost</Typography>
+            <Typography className={classes.label}>
+              Estimated BNB Cost
+            </Typography>
             <CustomTextField
               disabled
               value={estimatedCost.toFixed(6)}
@@ -321,7 +396,12 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
         </Box>
       )}
       {!!failedAddresses?.length && (
-        <CustomDialog onClose={handleDialogClose} open={!!failedAddresses?.length} fullWidth={true} maxWidth="md">
+        <CustomDialog
+          onClose={handleDialogClose}
+          open={!!failedAddresses?.length}
+          fullWidth={true}
+          maxWidth="md"
+        >
           <CustomDialogTitle onClose={handleDialogClose}>
             Expected failed addresses below will be ignored
           </CustomDialogTitle>
@@ -330,8 +410,12 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
               <TableBody>
                 {failedAddresses.map((failed, index) => (
                   <TableRow key={failed}>
-                    <CustomTableCell className={classes.failedLineNumberCell}>{index + 1}</CustomTableCell>
-                    <CustomTableCell className={classes.failedAddressCell}>{failed}</CustomTableCell>
+                    <CustomTableCell className={classes.failedLineNumberCell}>
+                      {index + 1}
+                    </CustomTableCell>
+                    <CustomTableCell className={classes.failedAddressCell}>
+                      {failed}
+                    </CustomTableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -339,7 +423,12 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton autoFocus onClick={handleDialogClose} variant="contained" color="primary">
+              <CustomButton
+                autoFocus
+                onClick={handleDialogClose}
+                variant="contained"
+                color="primary"
+              >
                 OK
               </CustomButton>
             </Box>
@@ -347,16 +436,26 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
         </CustomDialog>
       )}
       {isConfirmingTransfer && (
-        <CustomDialog onClose={closeConfirmTransfer} open={isConfirmingTransfer} maxWidth="md">
+        <CustomDialog
+          onClose={closeConfirmTransfer}
+          open={isConfirmingTransfer}
+          maxWidth="md"
+        >
           <CustomDialogTitle onClose={closeConfirmTransfer}>
             {transactionCount} transaction(s) will be executed
           </CustomDialogTitle>
           <DialogContent>
-            Please make sure to click confirm button {transactionCount} time(s) on Metamask.
+            Please make sure to click confirm button {transactionCount} time(s)
+            on Metamask.
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton autoFocus onClick={proceedTransfer} variant="contained" color="primary">
+              <CustomButton
+                autoFocus
+                onClick={proceedTransfer}
+                variant="contained"
+                color="primary"
+              >
                 OK
               </CustomButton>
             </Box>
@@ -366,7 +465,9 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
       <Box m={2} width="100%">
         {!!recipientChunks.length && (
           <Box m={1}>
-            {startTransfer && <Typography className={classes.label}>Transactions</Typography>}
+            {startTransfer && (
+              <Typography className={classes.label}>Transactions</Typography>
+            )}
             <Table size="small" className={classes.table}>
               <TableBody>
                 {recipientChunks.map((chunk, index) => (
@@ -380,7 +481,9 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
                     recipientInfo={chunk}
                     gasPrice={gasPrice}
                     addEstimatedGasAmount={addEstimatedGasAmount}
-                    increaseFinishedTransactionCount={increaseFinishedTransactionCount}
+                    increaseFinishedTransactionCount={
+                      increaseFinishedTransactionCount
+                    }
                     startTransfer={startTransfer}
                   />
                 ))}
@@ -388,30 +491,51 @@ function TransactionInfo({ web3, account, networkId, tokenInfo, recipientInfo, s
             </Table>
           </Box>
         )}
-        {recipientChunks?.length && finishedTransactionCount === recipientChunks?.length && (
-          <Box m={2} display="flex" alignItems="center" flexDirection="column">
-            <Typography variant="h6">💉💉💉 Congratulations 💉💉💉</Typography>
-            <Typography variant="h6" align="center">You have succesfully finished your transfers</Typography>
-          </Box>
-        )}
+        {recipientChunks?.length &&
+          finishedTransactionCount === recipientChunks?.length && (
+            <Box
+              m={2}
+              display="flex"
+              alignItems="center"
+              flexDirection="column"
+            >
+              <Typography variant="h6">
+                💉💉💉 Congratulations 💉💉💉
+              </Typography>
+              <Typography variant="h6" align="center">
+                You have succesfully finished your transfers
+              </Typography>
+            </Box>
+          )}
         <Box display="flex" justifyContent="center" m={2}>
           <Box m={1}>
-            {finishedTransactionCount > 0 && finishedTransactionCount === recipientChunks?.length ? (
+            {finishedTransactionCount > 0 &&
+            finishedTransactionCount === recipientChunks?.length ? (
               <Box display="flex" alignItems="center" flexDirection="column">
-                <CustomButton variant="contained" color="primary" onClick={reset}>
+                <CustomButton
+                  variant="contained"
+                  color="primary"
+                  onClick={reset}
+                >
                   New Transaction
                 </CustomButton>
-                <img src={transfer_success} alt="transfer success" width="100%" />
+                <img
+                  src={transfer_success}
+                  alt="transfer success"
+                  width="100%"
+                />
               </Box>
             ) : (
               <>
-                <CustomButton
-                  onClick={() => setActiveStep(1)}
-                  disabled={false}
-                >
+                <CustomButton onClick={() => setActiveStep(1)} disabled={false}>
                   Back
                 </CustomButton>
-                <CustomButton variant="contained" color="primary" onClick={confirmTransfer} disabled={startTransfer || !estimatedCost}>
+                <CustomButton
+                  variant="contained"
+                  color="primary"
+                  onClick={confirmTransfer}
+                  disabled={startTransfer || !estimatedCost}
+                >
                   Transfer
                 </CustomButton>
               </>

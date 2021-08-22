@@ -1,13 +1,17 @@
-export const numberWithCommas = number => {
+export const numberWithCommas = (number) => {
   const parts = number?.toString().split(".");
   if (!parts.length) {
     return null;
   }
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return parts.join(".");
-}
+};
 
-export const getBalanceStrWithDecimalsConsidered = (web3, balance, decimals) => {
+export const getBalanceStrWithDecimalsConsidered = (
+  web3,
+  balance,
+  decimals
+) => {
   if (!balance) {
     return null;
   }
@@ -22,4 +26,4 @@ export const getBalanceStrWithDecimalsConsidered = (web3, balance, decimals) => 
   } else {
     return `${beforeDecimal.toString()}.${afterDecimalStr}`;
   }
-}
+};

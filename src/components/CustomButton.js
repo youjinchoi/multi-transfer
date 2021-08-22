@@ -11,10 +11,10 @@ const CustomButton = withStyles({
     minWidth: 120,
   },
   contained: {
-    backgroundColor: '#EC008C',
-    '&:hover': {
-      backgroundColor: '#EC008C',
-      borderColor: '#0062cc',
+    backgroundColor: "#EC008C",
+    "&:hover": {
+      backgroundColor: "#EC008C",
+      borderColor: "#0062cc",
     },
   },
 })(Button);

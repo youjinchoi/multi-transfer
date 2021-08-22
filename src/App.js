@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import "./App.css";
 import { useMediaQuery } from "@material-ui/core";
-import { makeStyles } from '@material-ui/core/styles';
-import Transfer from './components/Transfer';
-import getWeb3 from './getWeb3';
+import { makeStyles } from "@material-ui/core/styles";
+import Transfer from "./components/Transfer";
+import getWeb3 from "./getWeb3";
 import frame_right from "./assets/frame_right.svg";
 import frame_left from "./assets/frame_left.svg";
 import Header from "./components/Header";
@@ -32,7 +32,7 @@ const useStyles = makeStyles(() => ({
       width: 310,
       zIndex: -1,
     },
-  }
+  },
 }));
 
 function App() {
@@ -60,7 +60,7 @@ function App() {
       } catch (error) {
         console.error(error);
       }
-    }
+    };
     if (!web3) {
       init();
     }
@@ -68,17 +68,31 @@ function App() {
 
   const connectWallet = async () => {
     if (!account) {
-      const response = await window.ethereum.send('eth_requestAccounts');
+      const response = await window.ethereum.send("eth_requestAccounts");
       if (response?.result) {
         setAccount(response.result[0]);
       }
     }
-  }
+  };
 
   return (
     <div className={showBackgroundImage && classes.app}>
-      <Header web3={web3} account={account} setAccount={setAccount} networkId={networkId} connectWallet={connectWallet} covacBalanceStr={covacBalanceStr} setCovacBalanceStr={setCovacBalanceStr} />
-      <Transfer web3={web3} account={account} networkId={networkId} covacBalanceStr={covacBalanceStr} connectWallet={connectWallet} />
+      <Header
+        web3={web3}
+        account={account}
+        setAccount={setAccount}
+        networkId={networkId}
+        connectWallet={connectWallet}
+        covacBalanceStr={covacBalanceStr}
+        setCovacBalanceStr={setCovacBalanceStr}
+      />
+      <Transfer
+        web3={web3}
+        account={account}
+        networkId={networkId}
+        covacBalanceStr={covacBalanceStr}
+        connectWallet={connectWallet}
+      />
     </div>
   );
 }

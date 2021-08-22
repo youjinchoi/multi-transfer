@@ -1,8 +1,16 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import CsvInfo from './CsvInfo';
-import TransactionInfo from './TransactionInfo';
-import { Box, Button, Divider, Step, StepLabel, Stepper, Typography } from '@material-ui/core';
+import React, { useEffect, useMemo, useState } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import CsvInfo from "./CsvInfo";
+import TransactionInfo from "./TransactionInfo";
+import {
+  Box,
+  Button,
+  Divider,
+  Step,
+  StepLabel,
+  Stepper,
+  Typography,
+} from "@material-ui/core";
 import TokenInfo from "./TokenInfo";
 import TransferInfo from "./TransferInfo";
 import clsx from "clsx";
@@ -47,19 +55,19 @@ const useStyles = makeStyles((theme) => ({
   connector1: {
     position: "absolute",
     top: 13,
-    left: 'calc(-90%)',
-    right: 'calc(50%)',
+    left: "calc(-90%)",
+    right: "calc(50%)",
     backgroundColor: "#fff",
     height: 3,
     "& :disabled": {
       backgroundColor: "84c4cc",
-    }
+    },
   },
   connector2: {
     position: "absolute",
     top: 13,
-    left: 'calc(-50%)',
-    right: 'calc(10%)',
+    left: "calc(-50%)",
+    right: "calc(10%)",
     backgroundColor: "#fff",
     height: 3,
   },
@@ -72,18 +80,18 @@ const useStyles = makeStyles((theme) => ({
 
 const customStepLabelDefaultStyles = {
   root: {
-    display: 'flex',
-  }
-}
+    display: "flex",
+  },
+};
 
 const useCustomStepOneLabelStyles = makeStyles({
   ...customStepLabelDefaultStyles,
   iconContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   label: {
     textAlign: "start !important",
-  }
+  },
 });
 
 const useCustomStepTwoLabelStyles = makeStyles({
@@ -92,32 +100,32 @@ const useCustomStepTwoLabelStyles = makeStyles({
 
 const useCustomStepThreeLabelStyles = makeStyles({
   iconContainer: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   label: {
     textAlign: "end !important",
-  }
+  },
 });
 
 const useCustomStepIconStyles = makeStyles({
   root: {
-    backgroundColor: '#00636C',
+    backgroundColor: "#00636C",
     zIndex: 1,
     color: "rgb(255, 255, 255, 0.6)",
     width: 30,
     height: 30,
-    display: 'flex',
-    borderRadius: '50%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    display: "flex",
+    borderRadius: "50%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   active: {
-    backgroundColor: '#EC008C',
-    color: '#fff',
+    backgroundColor: "#EC008C",
+    color: "#fff",
   },
   completed: {
-    backgroundColor: '#EC008C',
-    color: '#fff',
+    backgroundColor: "#EC008C",
+    color: "#fff",
   },
 });
 
@@ -137,9 +145,15 @@ function CustomStepIcon(props) {
   );
 }
 
-const steps = ['Input transfer details', 'Review', 'Transfer'];
+const steps = ["Input transfer details", "Review", "Transfer"];
 
-function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) {
+function Transfer({
+  web3,
+  account,
+  networkId,
+  covacBalanceStr,
+  connectWallet,
+}) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -150,10 +164,14 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
   const [recipientInfo, setRecipientInfo] = useState(null);
   const [transactionCount, setTransactionCount] = useState(null);
   const [totalAmount, setTotalAmount] = useState(null);
-  const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] = useState(null);
+  const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] =
+    useState(null);
   const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
 
-  const isNotEnoughCovac = useMemo(() => Number(covacBalanceStr) < 1000000, [covacBalanceStr]);
+  const isNotEnoughCovac = useMemo(
+    () => Number(covacBalanceStr) < 1000000,
+    [covacBalanceStr]
+  );
 
   const reset = () => {
     setActiveStep(0);
@@ -175,7 +193,8 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
       setTotalAmountWithDecimalsBN(null);
     }
     const totalAmount = recipientInfo?.reduce(
-      (acc, val) => (acc + Number(val.amount)), 0
+      (acc, val) => acc + Number(val.amount),
+      0
     );
     setTotalAmount(totalAmount);
 
@@ -191,7 +210,7 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientInfo, tokenInfo?.decimals]);
 
-  const getCustomStepLabelStyle = index => {
+  const getCustomStepLabelStyle = (index) => {
     if (index === 0) {
       return customStepOneLabelStyles;
     } else if (index === 1) {
@@ -201,19 +220,58 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
     } else {
       return null;
     }
-  }
+  };
 
   return (
-    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" m={1} mb={8}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      m={1}
+      mb={8}
+    >
       <Box my={2} className={classes.root}>
-        <Stepper activeStep={activeStep} alternativeLabel className={classes.stepper} connector={() => {}}>
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          className={classes.stepper}
+          connector={() => {}}
+        >
           {steps.map((label, index) => (
             <Step key={label}>
-              {index > 0 && <div style={index > activeStep ? { backgroundColor: "#84c4cc"} : {}} className={index === 1 ? classes.connector1 : classes.connector2} />}
-              <StepLabel StepIconComponent={CustomStepIcon} classes={getCustomStepLabelStyle(index)}>
-                <span className={classes.stepLabel} style={index > activeStep ? { opacity: 0.5 } : null }>{label}</span>
+              {index > 0 && (
+                <div
+                  style={
+                    index > activeStep ? { backgroundColor: "#84c4cc" } : {}
+                  }
+                  className={
+                    index === 1 ? classes.connector1 : classes.connector2
+                  }
+                />
+              )}
+              <StepLabel
+                StepIconComponent={CustomStepIcon}
+                classes={getCustomStepLabelStyle(index)}
+              >
+                <span
+                  className={classes.stepLabel}
+                  style={index > activeStep ? { opacity: 0.5 } : null}
+                >
+                  {label}
+                </span>
                 {index <= activeStep && (
-                  <Box display="flex" justifyContent={index === 0 ? "flex-start" : (index === 1 ? "center" : "flex-end")} m={1}>
+                  <Box
+                    display="flex"
+                    justifyContent={
+                      index === 0
+                        ? "flex-start"
+                        : index === 1
+                        ? "center"
+                        : "flex-end"
+                    }
+                    m={1}
+                  >
                     <div className={classes.stepLabelUnderline} />
                   </Box>
                 )}
@@ -223,9 +281,19 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
         </Stepper>
       </Box>
       <Box className={classes.root}>
-        <Typography variant="h4" className={classes.welcomeMessage}>Welcome to <strong>TokenBlast</strong></Typography>
-        <Box mt={2} mb={1} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
-          <img src={bsc} alt="bsc logo" className={classes.networkLogo} /><Typography>Binance Smart Chain</Typography>
+        <Typography variant="h4" className={classes.welcomeMessage}>
+          Welcome to <strong>TokenBlast</strong>
+        </Typography>
+        <Box
+          mt={2}
+          mb={1}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <img src={bsc} alt="bsc logo" className={classes.networkLogo} />
+          <Typography>Binance Smart Chain</Typography>
         </Box>
       </Box>
       <div className={classes.root}>
@@ -291,8 +359,16 @@ function Transfer({ web3, account, networkId, covacBalanceStr, connectWallet }) 
         </Box>
         {activeStep === steps.length && (
           <div>
-            <Typography className={classes.instructions}>All steps completed!</Typography>
-            <Button onClick={() => window.location.reload()} variant="contained" className={classes.button}>Reset</Button>
+            <Typography className={classes.instructions}>
+              All steps completed!
+            </Typography>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="contained"
+              className={classes.button}
+            >
+              Reset
+            </Button>
           </div>
         )}
       </div>

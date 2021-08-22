@@ -1,12 +1,12 @@
-import React, { useState, useEffect} from 'react';
-import { Box, CircularProgress, Typography, Link } from '@material-ui/core';
-import { Check, Error } from '@material-ui/icons';
+import React, { useState, useEffect } from "react";
+import { Box, CircularProgress, Typography, Link } from "@material-ui/core";
+import { Check, Error } from "@material-ui/icons";
 import MultiTransferer from "../abis/MultiTransferer.json";
 import { getTransactionUrl } from "../urls";
 import TableRow from "@material-ui/core/TableRow";
 import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
-import {makeStyles} from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles(() => ({
   lineNumberCell: {
@@ -17,7 +17,7 @@ const useStyles = makeStyles(() => ({
   },
   messageCell: {
     "& a": {
-      fontSize: 13
+      fontSize: 13,
     },
     overflowWrap: "anywhere",
   },
@@ -43,7 +43,7 @@ const CustomTableRow = withStyles(() => ({
     },
     "&:last-child td:first-child": {
       borderBottomLeftRadius: 15,
-    }
+    },
   },
 }))(TableRow);
 
@@ -56,7 +56,18 @@ const CustomTableCell = withStyles(() => ({
   },
 }))(TableCell);
 
-function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, recipientInfo, gasPrice, addEstimatedGasAmount, increaseFinishedTransactionCount, startTransfer }) {
+function SingleTransactionInfo({
+  index,
+  web3,
+  account,
+  networkId,
+  tokenInfo,
+  recipientInfo,
+  gasPrice,
+  addEstimatedGasAmount,
+  increaseFinishedTransactionCount,
+  startTransfer,
+}) {
   const classes = useStyles();
   const [transactionHash, setTransactionHash] = useState(null);
   const [transactionErrorMessage, setTransactionErrorMessage] = useState(null);
@@ -74,13 +85,16 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
       increaseFinishedTransactionCount();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactionStatus])
+  }, [transactionStatus]);
 
   useEffect(() => {
     const multiTransfererAddress = MultiTransferer.addresses[networkId];
 
     const calculateGas = async () => {
-      const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+      const multiTransferer = new web3.eth.Contract(
+        MultiTransferer.abi,
+        multiTransfererAddress
+      );
       const addresses = [];
       const amounts = [];
       recipientInfo.forEach(({ address, amount }) => {
@@ -90,20 +104,23 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
       });
 
       try {
-        const encodedData = await multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts).encodeABI({
-          from: account
-        })
-        web3.eth.estimateGas({
-          from: account,
-          data: encodedData,
-          gasPrice: gasPrice,
-          to: multiTransfererAddress,
-        })
-          .then(gasResult => {
+        const encodedData = await multiTransferer.methods
+          .multiTransferToken(tokenInfo.address, addresses, amounts)
+          .encodeABI({
+            from: account,
+          });
+        web3.eth
+          .estimateGas({
+            from: account,
+            data: encodedData,
+            gasPrice: gasPrice,
+            to: multiTransfererAddress,
+          })
+          .then((gasResult) => {
             console.log("gasResult", gasResult);
             setGasAmount(gasResult);
           })
-          .catch(e => console.error("error occured", e));
+          .catch((e) => console.error("error occured", e));
         /*
         const gasResult = await web3.eth.estimateGas({
           from: account,
@@ -118,7 +135,7 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
         console.error(error);
         return;
       }
-    }
+    };
 
     calculateGas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +146,10 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
       return;
     }
     const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    const multiTransferer = new web3.eth.Contract(MultiTransferer.abi, multiTransfererAddress);
+    const multiTransferer = new web3.eth.Contract(
+      MultiTransferer.abi,
+      multiTransfererAddress
+    );
     const addresses = [];
     const amounts = [];
     recipientInfo.forEach(({ address, amount }) => {
@@ -138,19 +158,22 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
       amounts.push(amountBN.mul(multiplierBN).toString());
     });
     try {
-      multiTransferer.methods.multiTransferToken(tokenInfo.address, addresses, amounts)
+      multiTransferer.methods
+        .multiTransferToken(tokenInfo.address, addresses, amounts)
         .send({
           from: account,
           gasPrice: gasPrice,
         })
-        .on('transactionHash', hash => {
+        .on("transactionHash", (hash) => {
           setTransactionHash(hash);
           setTransactionStatus("pending");
         })
-        .on('error', (error) => {
-          setTransactionErrorMessage(error?.message ?? "failed to multi transfer");
+        .on("error", (error) => {
+          setTransactionErrorMessage(
+            error?.message ?? "failed to multi transfer"
+          );
         })
-        .then(result => {
+        .then((result) => {
           console.log("transaction finisih", result);
           setTransactionStatus("finish");
         });
@@ -167,15 +190,24 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
 
   const getMessage = () => {
     if (!!transactionErrorMessage) {
-      return <Typography className={classes.errorMessage}>{transactionErrorMessage}</Typography>;
+      return (
+        <Typography className={classes.errorMessage}>
+          {transactionErrorMessage}
+        </Typography>
+      );
     } else if (!!transactionHash) {
       return (
-        <Link href={getTransactionUrl(transactionHash, networkId)} target="_blank">{transactionHash}</Link>
+        <Link
+          href={getTransactionUrl(transactionHash, networkId)}
+          target="_blank"
+        >
+          {transactionHash}
+        </Link>
       );
     } else {
       return <Typography>Pending Approval</Typography>;
     }
-  }
+  };
 
   const getIcon = () => {
     if (transactionErrorMessage) {
@@ -185,11 +217,13 @@ function SingleTransactionInfo({ index, web3, account, networkId, tokenInfo, rec
     } else {
       return <CircularProgress size={16} />;
     }
-  }
+  };
 
   return (
     <CustomTableRow>
-      <CustomTableCell className={classes.lineNumberCell}>{index + 1}</CustomTableCell>
+      <CustomTableCell className={classes.lineNumberCell}>
+        {index + 1}
+      </CustomTableCell>
       <CustomTableCell className={classes.messageCell}>
         {getMessage()}
       </CustomTableCell>

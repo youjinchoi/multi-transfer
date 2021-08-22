@@ -1,7 +1,7 @@
-import React from 'react';
-import {Box, Typography, useMediaQuery} from '@material-ui/core';
-import CustomTextField from './CustomTextField';
-import {makeStyles} from "@material-ui/core/styles";
+import React from "react";
+import { Box, Typography, useMediaQuery } from "@material-ui/core";
+import CustomTextField from "./CustomTextField";
+import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -26,7 +26,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
 function TransferInfo({ recipientInfo, totalAmount }) {
   const classes = useStyles();
   const isGrid = useMediaQuery("(min-width: 620px)");
@@ -42,7 +41,9 @@ function TransferInfo({ recipientInfo, totalAmount }) {
         />
       </Box>
       <Box m={1} className={isGrid && classes.transferInfoGrid}>
-        <Typography className={classes.label}>Total Amount to Transfer</Typography>
+        <Typography className={classes.label}>
+          Total Amount to Transfer
+        </Typography>
         <CustomTextField
           disabled
           value={totalAmount}

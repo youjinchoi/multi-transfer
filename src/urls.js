@@ -5,7 +5,7 @@ export const getTransactionUrl = (hash, networkId) => {
     return `https://bscscan.com/tx/${hash}`;
   }
   throw Error("not supported network");
-}
+};
 
 export const getBaseApiUrl = (networkId) => {
   if (networkId === 97) {
@@ -14,4 +14,4 @@ export const getBaseApiUrl = (networkId) => {
     return "https://api.bscscan.com";
   }
   throw Error("not supported network");
-}
+};
