@@ -185,7 +185,9 @@ function Header({
         justifyContent="space-between"
         className={classes.fullWidth}
       >
-        <img src={covac_log_white} height={30} alt="covac logo" />
+        <a href="https://covac.io" target="_blank" rel="noreferrer">
+          <img src={covac_log_white} height={30} alt="covac logo" />
+        </a>
         <Box
           display="flex"
           flexDirection={!showWalletInfo ? "column" : "row"}
