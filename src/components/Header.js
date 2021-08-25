@@ -22,6 +22,8 @@ import covac_log_white from "../assets/covac_logo_white.png";
 import twitter_icon from "../assets/twitter_icon.png";
 import tg_icon from "../assets/tg_icon.png";
 import website_icon from "../assets/website_icon.png";
+import github_icon from "../assets/github_icon.png";
+import youtube_icon from "../assets/youtube_icon.png";
 
 const useStyles = makeStyles(() => ({
   fullWidth: {
@@ -193,6 +195,7 @@ function Header({
           flexDirection={!showWalletInfo ? "column" : "row"}
           alignItems="center"
           my={showWalletInfo && 3}
+          ml={3}
         >
           {showLinks && (
             <>
@@ -219,6 +222,22 @@ function Header({
                 className={classes.headerLink}
               >
                 <img src={website_icon} height={40} alt="covac website" />
+              </a>
+              <a
+                href="https://github.com/CovacCrypto"
+                target="_blank"
+                rel="noreferrer"
+                className={classes.headerLink}
+              >
+                <img src={github_icon} height={40} alt="covac github" />
+              </a>
+              <a
+                href="https://www.youtube.com/channel/UCF0n3StJRbrM1oSeaXBQ4GQ"
+                target="_blank"
+                rel="noreferrer"
+                className={classes.headerLink}
+              >
+                <img src={youtube_icon} height={40} alt="covac youtube" />
               </a>
             </>
           )}
