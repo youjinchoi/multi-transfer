@@ -24,6 +24,7 @@ import tg_icon from "../assets/tg_icon.png";
 import website_icon from "../assets/website_icon.png";
 import github_icon from "../assets/github_icon.png";
 import youtube_icon from "../assets/youtube_icon.png";
+import medium_icon from "../assets/medium_icon.svg";
 
 const useStyles = makeStyles(() => ({
   fullWidth: {
@@ -80,6 +81,10 @@ const useStyles = makeStyles(() => ({
   },
   headerButtonCaption: {
     marginBottom: 6,
+  },
+  linkImage: {
+    width: 40,
+    height: 40,
   },
 }));
 
@@ -205,7 +210,11 @@ function Header({
                 rel="noreferrer"
                 className={classes.headerLink}
               >
-                <img src={twitter_icon} height={40} alt="covac twitter" />
+                <img
+                  src={twitter_icon}
+                  className={classes.linkImage}
+                  alt="covac twitter"
+                />
               </a>
               <a
                 href="https://t.me/CovacCryptoChat"
@@ -213,7 +222,11 @@ function Header({
                 rel="noreferrer"
                 className={classes.headerLink}
               >
-                <img src={tg_icon} height={40} alt="covac telegram" />
+                <img
+                  src={tg_icon}
+                  className={classes.linkImage}
+                  alt="covac telegram"
+                />
               </a>
               <a
                 href="https://www.covac.io/"
@@ -221,7 +234,11 @@ function Header({
                 rel="noreferrer"
                 className={classes.headerLink}
               >
-                <img src={website_icon} height={40} alt="covac website" />
+                <img
+                  src={website_icon}
+                  className={classes.linkImage}
+                  alt="covac website"
+                />
               </a>
               <a
                 href="https://github.com/CovacCrypto"
@@ -229,7 +246,11 @@ function Header({
                 rel="noreferrer"
                 className={classes.headerLink}
               >
-                <img src={github_icon} height={40} alt="covac github" />
+                <img
+                  src={github_icon}
+                  className={classes.linkImage}
+                  alt="covac github"
+                />
               </a>
               <a
                 href="https://www.youtube.com/channel/UCF0n3StJRbrM1oSeaXBQ4GQ"
@@ -237,7 +258,23 @@ function Header({
                 rel="noreferrer"
                 className={classes.headerLink}
               >
-                <img src={youtube_icon} height={40} alt="covac youtube" />
+                <img
+                  src={youtube_icon}
+                  className={classes.linkImage}
+                  alt="covac youtube"
+                />
+              </a>
+              <a
+                href="https://covac.medium.com/"
+                target="_blank"
+                rel="noreferrer"
+                className={classes.headerLink}
+              >
+                <img
+                  src={medium_icon}
+                  className={classes.linkImage}
+                  alt="covac medium"
+                />
               </a>
             </>
           )}
