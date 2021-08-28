@@ -58,6 +58,9 @@ const useStyles = makeStyles((theme) => ({
     filter:
       "invert(8%) sepia(97%) saturate(7218%) hue-rotate(349deg) brightness(79%) contrast(104%)",
   },
+  buyOnHotbitButton: {
+    marginLeft: 8,
+  },
 }));
 
 const useStylesInput = makeStyles((theme) => ({
@@ -208,10 +211,6 @@ function TokenInfo({
 
   const hideBuyCovacMessage = () => setShowBuyCovacMessage(false);
 
-  const onClickBuyCovac = () => {
-    hideBuyCovacMessage();
-  };
-
   return (
     <Box>
       <Box display="flex" justifyContent="center" m={1} flexDirection="column">
@@ -301,13 +300,22 @@ function TokenInfo({
                   <CustomButton
                     href="https://pancakeswap.finance/swap?inputCurrency=BNB&outputCurrency=0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454&exactAmount=1111112&exactField=outPUT"
                     target="_blank"
-                    onClick={onClickBuyCovac}
+                    onClick={hideBuyCovacMessage}
                     variant="contained"
                     color="primary"
                   >
                     Buy On Pancakeswap
                   </CustomButton>
                 </Tooltip>
+                <CustomButton
+                  href="https://www.hotbit.io/exchange?symbol=COVAC_USDT"
+                  target="_blank"
+                  onClick={hideBuyCovacMessage}
+                  variant="contained"
+                  className={classes.buyOnHotbitButton}
+                >
+                  Buy On Hotbit
+                </CustomButton>
               </Box>
             </DialogActions>
           </CustomDialog>
