@@ -128,7 +128,7 @@ function TokenInfo({
     let balanceBN = null;
     if (balance) {
       adjustedBalance = getBalanceStrWithDecimalsConsidered(balance, decimals);
-      balanceBN = new web3.utils.BN(adjustedBalance);
+      balanceBN = new web3.utils.BN(balance);
     }
     return { adjustedBalance, balanceBN };
   };
