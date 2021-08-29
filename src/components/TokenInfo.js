@@ -17,7 +17,10 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import CustomButton from "./CustomButton";
 import Tooltip from "@material-ui/core/Tooltip";
-import { numberWithCommas } from "../utils";
+import {
+  getBalanceStrWithDecimalsConsidered,
+  numberWithCommas,
+} from "../utils";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -124,12 +127,8 @@ function TokenInfo({
     let adjustedBalance = null;
     let balanceBN = null;
     if (balance) {
-      const decimalsBN = new web3.utils.BN(decimals);
-      balanceBN = new web3.utils.BN(balance);
-      const divisor = new web3.utils.BN(10).pow(decimalsBN);
-      const beforeDecimal = balanceBN.div(divisor);
-      const afterDecimal = balanceBN.mod(divisor);
-      adjustedBalance = `${beforeDecimal.toString()}.${afterDecimal.toString()}`;
+      adjustedBalance = getBalanceStrWithDecimalsConsidered(balance, decimals);
+      balanceBN = new web3.utils.BN(adjustedBalance);
     }
     return { adjustedBalance, balanceBN };
   };
