@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Typography, useMediaQuery } from "@material-ui/core";
 import CustomTextField from "./CustomTextField";
 import { makeStyles } from "@material-ui/core/styles";
@@ -30,13 +30,20 @@ function TransferInfo({ recipientInfo, totalAmount }) {
   const classes = useStyles();
   const isGrid = useMediaQuery("(min-width: 620px)");
 
+  const uniqueRecipientCount = useMemo(() => {
+    const recipientSet = new Set(
+      recipientInfo?.map((recipient) => recipient.address)
+    );
+    return recipientSet.size;
+  }, [recipientInfo]);
+
   return (
     <Box display={isGrid ? "flex" : "block"} justifyContent="center">
       <Box m={1} className={isGrid && classes.transferInfoGrid}>
         <Typography className={classes.label}>Total Recipients</Typography>
         <CustomTextField
           disabled
-          value={recipientInfo.length}
+          value={uniqueRecipientCount}
           className={classes.inputAlignCenter}
         />
       </Box>

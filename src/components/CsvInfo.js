@@ -13,6 +13,7 @@ import { Link, Typography } from "@material-ui/core";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import { makeStyles } from "@material-ui/core/styles";
+import CustomCheckbox from "./CustomCheckbox";
 import CustomButton from "./CustomButton";
 import { UnControlled as CodeMirror } from "react-codemirror2";
 import "codemirror/lib/codemirror.css";
@@ -117,6 +118,7 @@ function CsvInfo({
   const [isLoading, setIsLoading] = useState(false);
   const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] =
     useState(null);
+  const [allowDuplicateAddress, setAllowDuplicateAddress] = useState(false);
 
   const handleCloseToast = () => {
     setToast(null);
@@ -147,9 +149,15 @@ function CsvInfo({
       if (items.length === 1) {
         validLines.push(items[0]);
       } else {
-        items.forEach((item) => {
-          invalidLines.push({ ...item, reason: "duplicate address" });
-        });
+        if (allowDuplicateAddress) {
+          items.forEach((item) => {
+            validLines.push(item);
+          });
+        } else {
+          items.forEach((item) => {
+            invalidLines.push({ ...item, reason: "duplicate address" });
+          });
+        }
       }
     });
     invalidLines.sort((a, b) => a.lineNumber - b.lineNumber);
@@ -373,25 +381,36 @@ function CsvInfo({
           <ErrorMessage text="Please upload csv file" />
         )}
         {activeStep === 0 && (
-          <Box display="flex" justifyContent="flex-start" mt={4}>
-            <input
-              accept=".csv"
-              className={classes.csvInput}
-              id="csv-upload"
-              onChange={onFileDrop}
-              onClick={(e) => (e.target.value = null)}
-              type="file"
-            />
-            <label htmlFor="csv-upload">
-              <CustomButton
-                onClick={onClickUploadCsv}
-                variant="contained"
-                color="primary"
-                component="span"
-              >
-                Upload CSV file
-              </CustomButton>
-            </label>
+          <Box display="flex" justifyContent="space-between">
+            <Box mt={2}>
+              <input
+                accept=".csv"
+                className={classes.csvInput}
+                id="csv-upload"
+                onChange={onFileDrop}
+                onClick={(e) => (e.target.value = null)}
+                type="file"
+              />
+              <label htmlFor="csv-upload">
+                <CustomButton
+                  onClick={onClickUploadCsv}
+                  variant="contained"
+                  color="primary"
+                  component="span"
+                >
+                  Upload CSV file
+                </CustomButton>
+              </label>
+            </Box>
+            <Box display="flex" flexDirection="row" alignItems="center">
+              <CustomCheckbox
+                checked={allowDuplicateAddress}
+                onChange={() =>
+                  setAllowDuplicateAddress(!allowDuplicateAddress)
+                }
+              />
+              <Typography>allow duplicate address</Typography>
+            </Box>
           </Box>
         )}
       </Box>
