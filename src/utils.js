@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 export const numberWithCommas = (number) => {
   const parts = number?.toString().split(".");
   if (!parts.length) {
@@ -8,22 +10,13 @@ export const numberWithCommas = (number) => {
 };
 
 export const getBalanceStrWithDecimalsConsidered = (
-  web3,
   balance,
-  decimals
+  decimals,
+  decimalsToRound = 2
 ) => {
   if (!balance) {
     return null;
   }
-  const decimalsBN = new web3.utils.BN(decimals);
-  const balanceBN = new web3.utils.BN(balance);
-  const divisor = new web3.utils.BN(10).pow(decimalsBN);
-  const beforeDecimal = balanceBN.div(divisor);
-  const afterDecimalStr = balance.replace(beforeDecimal.toString(), "");
-
-  if (Number(`0.${afterDecimalStr}`) === 0) {
-    return beforeDecimal.toString();
-  } else {
-    return `${beforeDecimal.toString()}.${afterDecimalStr}`;
-  }
+  BigNumber.set({ DECIMAL_PLACES: decimalsToRound });
+  return new BigNumber(balance).div(10 ** decimals).toString();
 };

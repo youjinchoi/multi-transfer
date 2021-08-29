@@ -76,11 +76,10 @@ function App() {
   };
 
   return (
-    <div className={showBackgroundImage && classes.app}>
+    <div className={showBackgroundImage ? classes.app : undefined}>
       <Header
         web3={web3}
         account={account}
-        setAccount={setAccount}
         networkId={networkId}
         connectWallet={connectWallet}
         covacBalanceStr={covacBalanceStr}

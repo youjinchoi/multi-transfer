@@ -91,7 +91,6 @@ const useStyles = makeStyles(() => ({
 function Header({
   web3,
   account,
-  setAccount,
   networkId,
   connectWallet,
   covacBalanceStr,
@@ -112,10 +111,8 @@ function Header({
         : null;
       const decimals = await covacContract.methods.decimals().call();
       const adjustedBalance = getBalanceStrWithDecimalsConsidered(
-        web3,
         balance,
-        decimals,
-        true
+        decimals
       );
       setCovacBalanceStr(adjustedBalance);
     };
