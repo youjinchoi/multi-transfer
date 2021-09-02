@@ -1,6 +1,7 @@
-import TextField from "@material-ui/core/TextField";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 import React from "react";
+
+import makeStyles from "@material-ui/core/styles/makeStyles";
+import MaterialTextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -30,12 +31,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function CustomTextField({ InputProps = {}, ...rest }) {
+function TextField({ InputProps = {}, ...rest }) {
   const classes = useStyles();
   const { classes: inputClasses, ...restInputProps } = InputProps;
 
   return (
-    <TextField
+    <MaterialTextField
       InputProps={{
         classes: { ...inputClasses, ...classes },
         disableUnderline: true,
@@ -46,4 +47,4 @@ function CustomTextField({ InputProps = {}, ...rest }) {
   );
 }
 
-export default CustomTextField;
+export default TextField;

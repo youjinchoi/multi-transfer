@@ -1,30 +1,32 @@
 import React, { useState, useEffect, useCallback } from "react";
-import Box from "@material-ui/core/Box";
+
 import { Typography, useMediaQuery } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import AppBar from "@material-ui/core/AppBar";
+import Box from "@material-ui/core/Box";
 import "codemirror/lib/codemirror.css";
 import "codemirror/keymap/sublime";
 import "codemirror/theme/monokai.css";
 import "codemirror/mode/xml/xml";
 import "codemirror/mode/javascript/javascript";
-import clsx from "clsx";
 import Button from "@material-ui/core/Button";
-import covac_icon from "../assets/covac_icon.png";
+import IconButton from "@material-ui/core/IconButton";
+import { makeStyles } from "@material-ui/core/styles";
+import { ExpandMore, ExpandLess } from "@material-ui/icons";
+import clsx from "clsx";
+
+import Covac from "../../abis/Covac.json";
+import covac_icon from "../../assets/covac_icon.png";
+import covac_log_white from "../../assets/covac_logo_white.png";
+import github_icon from "../../assets/github_icon.png";
+import medium_icon from "../../assets/medium_icon.svg";
+import tg_icon from "../../assets/tg_icon.png";
+import twitter_icon from "../../assets/twitter_icon.png";
+import website_icon from "../../assets/website_icon.png";
+import youtube_icon from "../../assets/youtube_icon.png";
 import {
   getBalanceStrWithDecimalsConsidered,
   numberWithCommas,
-} from "../utils";
-import IconButton from "@material-ui/core/IconButton";
-import { ExpandMore, ExpandLess } from "@material-ui/icons";
-import Covac from "../abis/Covac.json";
-import AppBar from "@material-ui/core/AppBar";
-import covac_log_white from "../assets/covac_logo_white.png";
-import twitter_icon from "../assets/twitter_icon.png";
-import tg_icon from "../assets/tg_icon.png";
-import website_icon from "../assets/website_icon.png";
-import github_icon from "../assets/github_icon.png";
-import youtube_icon from "../assets/youtube_icon.png";
-import medium_icon from "../assets/medium_icon.svg";
+} from "../../utils";
 
 const useStyles = makeStyles(() => ({
   fullWidth: {

@@ -1,32 +1,34 @@
 import React, { useState, useEffect } from "react";
-import Spreadsheet from "react-spreadsheet";
+
+import { Link, Typography } from "@material-ui/core";
 import Box from "@material-ui/core/Box";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
 import Snackbar from "@material-ui/core/Snackbar";
-import MuiAlert from "@material-ui/lab/Alert";
-import Web3Utils from "web3-utils";
-import csv from "csv";
-import TableRow from "@material-ui/core/TableRow";
+import { makeStyles } from "@material-ui/core/styles";
+import withStyles from "@material-ui/core/styles/withStyles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
-import { Link, Typography } from "@material-ui/core";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import { makeStyles } from "@material-ui/core/styles";
-import CustomCheckbox from "./CustomCheckbox";
-import CustomButton from "./CustomButton";
+import TableRow from "@material-ui/core/TableRow";
+import MuiAlert from "@material-ui/lab/Alert";
+import clsx from "clsx";
+import csv from "csv";
 import { UnControlled as CodeMirror } from "react-codemirror2";
+import Spreadsheet from "react-spreadsheet";
+import Web3Utils from "web3-utils";
 import "codemirror/lib/codemirror.css";
 import "codemirror/keymap/sublime";
 import "codemirror/theme/monokai.css";
 import "codemirror/mode/xml/xml";
 import "codemirror/mode/javascript/javascript";
-import MultiTransferer from "../abis/MultiTransferer.json";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import withStyles from "@material-ui/core/styles/withStyles";
-import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
-import ErrorMessage from "./ErrorMessage";
-import clsx from "clsx";
+
+import MultiTransferer from "../../abis/MultiTransferer.json";
+import Button from "../../components/Button";
+import Checkbox from "../../components/Checkbox";
+import { Dialog, DialogTitle } from "../../components/Dialog";
+import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -355,7 +357,7 @@ function CsvInfo({
             {activeStep === 0 ? "List of Addresses in CSV" : "Imported lines"}
           </Typography>
           {activeStep === 0 &&
-            (!!editorValue ? (
+            (editorValue ? (
               <Link onClick={discard} className={classes.discardButton}>
                 Discard
               </Link>
@@ -392,18 +394,18 @@ function CsvInfo({
                 type="file"
               />
               <label htmlFor="csv-upload">
-                <CustomButton
+                <Button
                   onClick={onClickUploadCsv}
                   variant="contained"
                   color="primary"
                   component="span"
                 >
                   Upload CSV file
-                </CustomButton>
+                </Button>
               </label>
             </Box>
             <Box display="flex" flexDirection="row" alignItems="center">
-              <CustomCheckbox
+              <Checkbox
                 checked={allowDuplicateAddress}
                 onChange={() =>
                   setAllowDuplicateAddress(!allowDuplicateAddress)
@@ -425,40 +427,38 @@ function CsvInfo({
         </MuiAlert>
       </Snackbar>
       {showInputTokenAddressMessage && (
-        <CustomDialog
+        <Dialog
           onClose={hideInputTokenAddressMessage}
           open={showInputTokenAddressMessage}
           maxWidth="md"
         >
-          <CustomDialogTitle onClose={hideInputTokenAddressMessage}>
+          <DialogTitle onClose={hideInputTokenAddressMessage}>
             Token address is required
-          </CustomDialogTitle>
+          </DialogTitle>
           <DialogContent>
             <Typography>Please input token address to proceed</Typography>
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton
+              <Button
                 autoFocus
                 onClick={hideInputTokenAddressMessage}
                 variant="contained"
                 color="primary"
               >
                 OK
-              </CustomButton>
+              </Button>
             </Box>
           </DialogActions>
-        </CustomDialog>
+        </Dialog>
       )}
       {isExampleCsvVisible && (
-        <CustomDialog
+        <Dialog
           onClose={closeExampleCsv}
           open={isExampleCsvVisible}
           maxWidth="md"
         >
-          <CustomDialogTitle onClose={closeExampleCsv}>
-            Example CSV
-          </CustomDialogTitle>
+          <DialogTitle onClose={closeExampleCsv}>Example CSV</DialogTitle>
           <DialogContent>
             <Box my={1}>
               <Typography>
@@ -470,28 +470,28 @@ function CsvInfo({
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton
+              <Button
                 autoFocus
                 onClick={closeExampleCsv}
                 variant="contained"
                 color="primary"
               >
                 OK
-              </CustomButton>
+              </Button>
             </Box>
           </DialogActions>
-        </CustomDialog>
+        </Dialog>
       )}
       {!!invalidInputs?.length && (
-        <CustomDialog
+        <Dialog
           onClose={handleClose}
           open={!!invalidInputs?.length}
           fullWidth={true}
           maxWidth="md"
         >
-          <CustomDialogTitle onClose={handleClose}>
+          <DialogTitle onClose={handleClose}>
             Invalid inputs below will be ignored
-          </CustomDialogTitle>
+          </DialogTitle>
           <DialogContent>
             <Table size="small">
               <TableBody>
@@ -513,17 +513,17 @@ function CsvInfo({
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton
+              <Button
                 autoFocus
                 onClick={handleClose}
                 variant="contained"
                 color="primary"
               >
                 OK
-              </CustomButton>
+              </Button>
             </Box>
           </DialogActions>
-        </CustomDialog>
+        </Dialog>
       )}
       <Box
         display="flex"
@@ -538,11 +538,9 @@ function CsvInfo({
           </Box>
         )}
         <Box display="flex" justifyContent="center">
-          {activeStep === 1 && (
-            <CustomButton onClick={handleBack}>Back</CustomButton>
-          )}
+          {activeStep === 1 && <Button onClick={handleBack}>Back</Button>}
           <div className={classes.wrapper}>
-            <CustomButton
+            <Button
               variant="contained"
               color="primary"
               disabled={
@@ -551,7 +549,7 @@ function CsvInfo({
               onClick={handleNext}
             >
               Next
-            </CustomButton>
+            </Button>
             {isLoading && (
               <CircularProgress size={24} className={classes.buttonProgress} />
             )}

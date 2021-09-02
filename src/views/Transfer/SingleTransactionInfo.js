@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
+
 import { Box, CircularProgress, Typography, Link } from "@material-ui/core";
-import { Check, Error } from "@material-ui/icons";
-import MultiTransferer from "../abis/MultiTransferer.json";
-import { getTransactionUrl } from "../urls";
-import TableRow from "@material-ui/core/TableRow";
+import { makeStyles } from "@material-ui/core/styles";
 import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
-import { makeStyles } from "@material-ui/core/styles";
+import TableRow from "@material-ui/core/TableRow";
+import { Check, Error } from "@material-ui/icons";
+
+import MultiTransferer from "../../abis/MultiTransferer.json";
+import { getTransactionUrl } from "../../urls";
 
 const useStyles = makeStyles(() => ({
   lineNumberCell: {
@@ -189,13 +191,13 @@ function SingleTransactionInfo({
   }
 
   const getMessage = () => {
-    if (!!transactionErrorMessage) {
+    if (transactionErrorMessage) {
       return (
         <Typography className={classes.errorMessage}>
           {transactionErrorMessage}
         </Typography>
       );
-    } else if (!!transactionHash) {
+    } else if (transactionHash) {
       return (
         <Link
           href={getTransactionUrl(transactionHash, networkId)}

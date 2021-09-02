@@ -1,7 +1,8 @@
 import React from "react";
+
 import { Box, Typography } from "@material-ui/core";
-import ErrorIcon from "@material-ui/icons/Error";
 import { makeStyles } from "@material-ui/core/styles";
+import ErrorIcon from "@material-ui/icons/Error";
 
 const useStyles = makeStyles(() => ({
   box: {

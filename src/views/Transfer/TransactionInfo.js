@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { makeStyles } from "@material-ui/core/styles";
+
 import {
   Box,
   CircularProgress,
@@ -8,19 +8,21 @@ import {
   Typography,
   useMediaQuery,
 } from "@material-ui/core";
-import chunk from "lodash/chunk";
-import sum from "lodash/sum";
-import MultiTransferer from "../abis/MultiTransferer.json";
-import SingleTransactionInfo from "./SingleTransactionInfo";
-import CustomTextField from "./CustomTextField";
-import CustomButton from "./CustomButton";
-import transfer_success from "../assets/transfer_success.png";
-import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
-import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
-import TableRow from "@material-ui/core/TableRow";
+import DialogContent from "@material-ui/core/DialogContent";
+import { makeStyles } from "@material-ui/core/styles";
 import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
+import TableRow from "@material-ui/core/TableRow";
+import chunk from "lodash/chunk";
+import sum from "lodash/sum";
+
+import MultiTransferer from "../../abis/MultiTransferer.json";
+import transfer_success from "../../assets/transfer_success.png";
+import Button from "../../components/Button";
+import { Dialog, DialogTitle } from "../../components/Dialog";
+import TextField from "../../components/TextField";
+import SingleTransactionInfo from "./SingleTransactionInfo";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -369,7 +371,7 @@ function TransactionInfo({
             <Typography className={classes.label}>
               Total Transaction Count
             </Typography>
-            <CustomTextField
+            <TextField
               disabled
               value={transactionCount}
               className={classes.inputAlignCenter}
@@ -377,7 +379,7 @@ function TransactionInfo({
           </Box>
           <Box m={1} className={isGrid && classes.transactionInfoGrid}>
             <Typography className={classes.label}>Gas Price(Gwei)</Typography>
-            <CustomTextField
+            <TextField
               disabled
               value={gasPrice / 1000000000}
               className={classes.inputAlignCenter}
@@ -387,7 +389,7 @@ function TransactionInfo({
             <Typography className={classes.label}>
               Estimated BNB Cost
             </Typography>
-            <CustomTextField
+            <TextField
               disabled
               value={estimatedCost.toFixed(6)}
               className={classes.inputAlignCenter}
@@ -396,15 +398,15 @@ function TransactionInfo({
         </Box>
       )}
       {!!failedAddresses?.length && (
-        <CustomDialog
+        <Dialog
           onClose={handleDialogClose}
           open={!!failedAddresses?.length}
           fullWidth={true}
           maxWidth="md"
         >
-          <CustomDialogTitle onClose={handleDialogClose}>
+          <DialogTitle onClose={handleDialogClose}>
             Expected failed addresses below will be ignored
-          </CustomDialogTitle>
+          </DialogTitle>
           <DialogContent>
             <Table size="small">
               <TableBody>
@@ -423,44 +425,44 @@ function TransactionInfo({
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton
+              <Button
                 autoFocus
                 onClick={handleDialogClose}
                 variant="contained"
                 color="primary"
               >
                 OK
-              </CustomButton>
+              </Button>
             </Box>
           </DialogActions>
-        </CustomDialog>
+        </Dialog>
       )}
       {isConfirmingTransfer && (
-        <CustomDialog
+        <Dialog
           onClose={closeConfirmTransfer}
           open={isConfirmingTransfer}
           maxWidth="md"
         >
-          <CustomDialogTitle onClose={closeConfirmTransfer}>
+          <DialogTitle onClose={closeConfirmTransfer}>
             {transactionCount} transaction(s) will be executed
-          </CustomDialogTitle>
+          </DialogTitle>
           <DialogContent>
             Please make sure to click confirm button {transactionCount} time(s)
             on Metamask.
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <CustomButton
+              <Button
                 autoFocus
                 onClick={proceedTransfer}
                 variant="contained"
                 color="primary"
               >
                 OK
-              </CustomButton>
+              </Button>
             </Box>
           </DialogActions>
-        </CustomDialog>
+        </Dialog>
       )}
       <Box m={2} width="100%">
         {!!recipientChunks.length && (
@@ -512,13 +514,9 @@ function TransactionInfo({
             {finishedTransactionCount > 0 &&
             finishedTransactionCount === recipientChunks?.length ? (
               <Box display="flex" alignItems="center" flexDirection="column">
-                <CustomButton
-                  variant="contained"
-                  color="primary"
-                  onClick={reset}
-                >
+                <Button variant="contained" color="primary" onClick={reset}>
                   New Transaction
-                </CustomButton>
+                </Button>
                 <img
                   src={transfer_success}
                   alt="transfer success"
@@ -527,17 +525,17 @@ function TransactionInfo({
               </Box>
             ) : (
               <>
-                <CustomButton onClick={() => setActiveStep(1)} disabled={false}>
+                <Button onClick={() => setActiveStep(1)} disabled={false}>
                   Back
-                </CustomButton>
-                <CustomButton
+                </Button>
+                <Button
                   variant="contained"
                   color="primary"
                   onClick={confirmTransfer}
                   disabled={startTransfer || !estimatedCost}
                 >
                   Transfer
-                </CustomButton>
+                </Button>
               </>
             )}
           </Box>

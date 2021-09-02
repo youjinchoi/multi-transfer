@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { withStyles, makeStyles } from "@material-ui/core/styles";
+
 import {
   Box,
   TablePagination,
@@ -10,7 +10,9 @@ import {
   TableBody,
   Table,
 } from "@material-ui/core";
-import MultiTransferer from "../abis/MultiTransferer.json";
+import { withStyles, makeStyles } from "@material-ui/core/styles";
+
+import MultiTransferer from "../../abis/MultiTransferer.json";
 import CustomButton from "./CustomButton";
 
 const StyledTableCell = withStyles((theme) => ({

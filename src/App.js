@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
+
 import "./App.css";
 import { useMediaQuery } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import Transfer from "./components/Transfer";
-import getWeb3 from "./getWeb3";
-import frame_right from "./assets/frame_right.svg";
+
 import frame_left from "./assets/frame_left.svg";
-import Header from "./components/Header";
+import frame_right from "./assets/frame_right.svg";
+import getWeb3 from "./getWeb3";
+import Header from "./views/Header";
+import Transfer from "./views/Transfer";
 
 const useStyles = makeStyles(() => ({
   app: {

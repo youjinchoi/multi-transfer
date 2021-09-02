@@ -1,26 +1,28 @@
 import React, { useEffect, useState } from "react";
+
 import {
   Box,
   CircularProgress,
   Typography,
   useMediaQuery,
 } from "@material-ui/core";
-import Web3Utils from "web3-utils";
-import { getContractABI } from "../apis/bscscan";
-import CustomTextField from "./CustomTextField";
-import { makeStyles } from "@material-ui/core/styles";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import search from "../assets/search.svg";
-import ErrorMessage from "./ErrorMessage";
-import { CustomDialog, CustomDialogTitle } from "./CustomDialog";
-import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
-import CustomButton from "./CustomButton";
+import DialogContent from "@material-ui/core/DialogContent";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import { makeStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import Web3Utils from "web3-utils";
+
+import { getContractABI } from "../../apis/bscscan";
+import search from "../../assets/search.svg";
+import Button from "../../components/Button";
+import { Dialog, DialogTitle } from "../../components/Dialog";
+import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
+import TextField from "../../components/TextField";
 import {
   getBalanceStrWithDecimalsConsidered,
   numberWithCommas,
-} from "../utils";
+} from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -216,7 +218,7 @@ function TokenInfo({
         <Box display="flex" justifyContent="flex-start">
           <Typography className={classes.label}>Token Address</Typography>
         </Box>
-        <CustomTextField
+        <TextField
           onClick={onTokenAddressClick}
           onChange={onTokenAddressChange}
           disabled={!account || isNotEnoughCovac || activeStep !== 0}
@@ -246,14 +248,14 @@ function TokenInfo({
           }
         />
         {showConnectWalletMessage && (
-          <CustomDialog
+          <Dialog
             onClose={hideConnectWalletMessage}
             open={showConnectWalletMessage}
             maxWidth="md"
           >
-            <CustomDialogTitle onClose={hideConnectWalletMessage}>
+            <DialogTitle onClose={hideConnectWalletMessage}>
               Metamask wallet is not connected
-            </CustomDialogTitle>
+            </DialogTitle>
             <DialogContent>
               <Typography>
                 Please connect your Metamask wallet to proceed
@@ -261,27 +263,27 @@ function TokenInfo({
             </DialogContent>
             <DialogActions>
               <Box m={2}>
-                <CustomButton
+                <Button
                   autoFocus
                   onClick={onClickConnectWallet}
                   variant="contained"
                   color="primary"
                 >
                   Connect
-                </CustomButton>
+                </Button>
               </Box>
             </DialogActions>
-          </CustomDialog>
+          </Dialog>
         )}
         {showBuyCovacMessage && (
-          <CustomDialog
+          <Dialog
             onClose={hideBuyCovacMessage}
             open={showBuyCovacMessage}
             maxWidth="md"
           >
-            <CustomDialogTitle onClose={hideBuyCovacMessage}>
+            <DialogTitle onClose={hideBuyCovacMessage}>
               Insufficient $COVAC balance
-            </CustomDialogTitle>
+            </DialogTitle>
             <DialogContent>
               <Typography>
                 Minimum 1,000,000 $COVAC in your wallet is required to proceed
@@ -296,7 +298,7 @@ function TokenInfo({
                   arrow
                   classes={{ tooltip: classes.tooltip }}
                 >
-                  <CustomButton
+                  <Button
                     href="https://pancakeswap.finance/swap?inputCurrency=BNB&outputCurrency=0x2ADfe76173F7e7DAef1463A83BA4d06171fAc454&exactAmount=1111112&exactField=outPUT"
                     target="_blank"
                     onClick={hideBuyCovacMessage}
@@ -304,9 +306,9 @@ function TokenInfo({
                     color="primary"
                   >
                     Buy On Pancakeswap
-                  </CustomButton>
+                  </Button>
                 </Tooltip>
-                <CustomButton
+                <Button
                   href="https://www.hotbit.io/exchange?symbol=COVAC_USDT"
                   target="_blank"
                   onClick={hideBuyCovacMessage}
@@ -314,10 +316,10 @@ function TokenInfo({
                   className={classes.buyOnHotbitButton}
                 >
                   Buy On Hotbit
-                </CustomButton>
+                </Button>
               </Box>
             </DialogActions>
-          </CustomDialog>
+          </Dialog>
         )}
       </Box>
       {isLoading && (
@@ -336,7 +338,7 @@ function TokenInfo({
               <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Name</Typography>
               </div>
-              <CustomTextField
+              <TextField
                 value={tokenInfo.name}
                 disabled
                 m={1}
@@ -347,7 +349,7 @@ function TokenInfo({
               <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Symbol</Typography>
               </div>
-              <CustomTextField
+              <TextField
                 value={tokenInfo.symbol}
                 disabled
                 m={1}
@@ -358,7 +360,7 @@ function TokenInfo({
               <div className={classes.tokenInfoDescription}>
                 <Typography className={classes.label}>Decimals</Typography>
               </div>
-              <CustomTextField
+              <TextField
                 value={tokenInfo.decimals}
                 disabled
                 m={1}
@@ -377,7 +379,7 @@ function TokenInfo({
                 Token Balance of Connected Wallet
               </Typography>
             </Box>
-            <CustomTextField
+            <TextField
               value={numberWithCommas(tokenInfo.balance)}
               disabled
               error={activeStep === 1 && tokenInfo?.notEnoughBalance}

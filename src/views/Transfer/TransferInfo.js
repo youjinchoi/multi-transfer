@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
+
 import { Box, Typography, useMediaQuery } from "@material-ui/core";
-import CustomTextField from "./CustomTextField";
 import { makeStyles } from "@material-ui/core/styles";
+
+import TextField from "../../components/TextField";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -41,7 +43,7 @@ function TransferInfo({ recipientInfo, totalAmount }) {
     <Box display={isGrid ? "flex" : "block"} justifyContent="center">
       <Box m={1} className={isGrid && classes.transferInfoGrid}>
         <Typography className={classes.label}>Total Recipients</Typography>
-        <CustomTextField
+        <TextField
           disabled
           value={uniqueRecipientCount}
           className={classes.inputAlignCenter}
@@ -51,7 +53,7 @@ function TransferInfo({ recipientInfo, totalAmount }) {
         <Typography className={classes.label}>
           Total Amount to Transfer
         </Typography>
-        <CustomTextField
+        <TextField
           disabled
           value={totalAmount}
           className={classes.inputAlignCenter}

@@ -1,7 +1,7 @@
-import Button from "@material-ui/core/Button";
+import MaterialButton from "@material-ui/core/Button";
 import withStyles from "@material-ui/core/styles/withStyles";
 
-const CustomButton = withStyles({
+const Button = withStyles({
   root: {
     borderRadius: 25,
     textTransform: "unset",
@@ -17,6 +17,6 @@ const CustomButton = withStyles({
       borderColor: "#0062cc",
     },
   },
-})(Button);
+})(MaterialButton);
 
-export default CustomButton;
+export default Button;

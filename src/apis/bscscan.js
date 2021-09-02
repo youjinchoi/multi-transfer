@@ -1,4 +1,5 @@
 import axios from "axios";
+
 import { getBaseApiUrl } from "../urls";
 
 const API_KEY = "4EVTT1FDIJ1P5MF9G8UFKDACCWWN8X3V4E";

@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import CsvInfo from "./CsvInfo";
-import TransactionInfo from "./TransactionInfo";
+
 import {
   Box,
   Button,
@@ -11,10 +9,14 @@ import {
   Stepper,
   Typography,
 } from "@material-ui/core";
-import TokenInfo from "./TokenInfo";
-import TransferInfo from "./TransferInfo";
+import { makeStyles } from "@material-ui/core/styles";
 import clsx from "clsx";
-import bsc from "../assets/bsc.svg";
+
+import bsc from "../../assets/bsc.svg";
+import CsvInfo from "./CsvInfo";
+import TokenInfo from "./TokenInfo";
+import TransactionInfo from "./TransactionInfo";
+import TransferInfo from "./TransferInfo";
 
 const useStyles = makeStyles((theme) => ({
   root: {
