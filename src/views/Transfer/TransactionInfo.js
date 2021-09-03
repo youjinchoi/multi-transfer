@@ -14,14 +14,17 @@ import { makeStyles } from "@material-ui/core/styles";
 import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
+import { useWeb3React } from "@web3-react/core";
+import { BigNumber } from "ethers";
 import chunk from "lodash/chunk";
 import sum from "lodash/sum";
+import queryString from "query-string";
 
-import MultiTransferer from "../../abis/MultiTransferer.json";
 import transfer_success from "../../assets/transfer_success.png";
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import TextField from "../../components/TextField";
+import { getTokenBlastContract } from "../../utils";
 import SingleTransactionInfo from "./SingleTransactionInfo";
 
 const useStyles = makeStyles((theme) => ({
@@ -100,9 +103,6 @@ const CustomTableCell = withStyles(() => ({
 const deadAddress = "0x0000000000000000000000000000000000000000";
 
 function TransactionInfo({
-  web3,
-  account,
-  networkId,
   tokenInfo,
   recipientInfo,
   setRecipientInfo,
@@ -127,18 +127,19 @@ function TransactionInfo({
   const [estimatedTransactionCount, setEstimatedTransactionCount] =
     useState(null);
 
+  const { account, library, chainId } = useWeb3React();
+
   const isGrid = useMediaQuery("(min-width: 620px)");
 
-  const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
-  const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
+  const decimalsBN = BigNumber.from(tokenInfo.decimals);
+  const multiplierBN = BigNumber.from(10).pow(decimalsBN);
+
+  const tokenBlastContract = useMemo(
+    () => getTokenBlastContract(chainId, library, account),
+    [chainId, library, account]
+  );
 
   useEffect(() => {
-    const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    const multiTransferer = new web3.eth.Contract(
-      MultiTransferer.abi,
-      multiTransfererAddress
-    );
-
     const chunks = chunk(recipientInfo, 10);
     const failedAddressSet = new Set();
     const filterOutFailedAddresses = async () => {
@@ -148,14 +149,16 @@ function TransactionInfo({
           const amounts = [];
           chunk.forEach(({ address, amount }) => {
             addresses.push(address);
-            const amountBN = new web3.utils.BN(amount);
+            const amountBN = BigNumber.from(amount);
             amounts.push(amountBN.mul(multiplierBN).toString());
           });
-          const failedAddresses = await multiTransferer.methods
-            .multiTransferToken(tokenInfo.address, addresses, amounts)
-            .call({
-              from: account,
-            });
+          const failedAddresses =
+            await tokenBlastContract.callStatic.multiTransferToken(
+              tokenInfo.address,
+              addresses,
+              amounts
+            );
+
           failedAddresses.forEach((failed) => {
             if (failed !== deadAddress) {
               failedAddressSet.add(failed);
@@ -163,7 +166,7 @@ function TransactionInfo({
           });
         })
       );
-      console.log("final failedAddressSet", failedAddressSet);
+      console.log("failedAddressSet", failedAddressSet);
       if (failedAddressSet.size > 0) {
         setFailedAddresses(Array.from(failedAddressSet));
         const filtered = recipientInfo.filter(
@@ -191,47 +194,18 @@ function TransactionInfo({
         validRecipientInfo?.length / estimatedTransactionCount;
       console.log("testChunkSize", testChunkSize);
       const testChunk = validRecipientInfo.slice(0, testChunkSize + 1);
-      const multiTransfererAddress = MultiTransferer.addresses[networkId];
-      const multiTransferer = new web3.eth.Contract(
-        MultiTransferer.abi,
-        multiTransfererAddress
-      );
-
       const addresses = [];
       const amounts = [];
       testChunk.forEach(({ address, amount }) => {
         addresses.push(address);
-        const amountBN = new web3.utils.BN(amount);
+        const amountBN = BigNumber.from(amount);
         amounts.push(amountBN.mul(multiplierBN).toString());
       });
 
       try {
-        const encodedData = await multiTransferer.methods
+        const gasPrice = 10;
+        const gasResult = await tokenBlastContract.estimateGas
           .multiTransferToken(tokenInfo.address, addresses, amounts)
-          .encodeABI({
-            from: account,
-          });
-        web3.eth
-          .estimateGas({
-            from: account,
-            data: encodedData,
-            gasPrice: gasPrice,
-            to: multiTransfererAddress,
-          })
-          .then((gasResult) => {
-            console.log("gasResult", gasResult);
-            const value = Math.floor(
-              validRecipientInfo?.length / estimatedTransactionCount
-            );
-            const mod = validRecipientInfo?.length % estimatedTransactionCount;
-            const estimatedTransferPerTransaction =
-              mod === 0 ? value : value + 1;
-            setTransactionCount(estimatedTransactionCount);
-            setRecipientChunks(
-              chunk(validRecipientInfo, estimatedTransferPerTransaction)
-            );
-            setIsLoading(false);
-          })
           .catch((e) => {
             console.error("error occured", e);
             if (e.message.startsWith("gas required exceeds allowance")) {
@@ -239,6 +213,25 @@ function TransactionInfo({
               setEstimatedTransactionCount(estimatedTransactionCount + 1);
             }
           });
+
+        console.log("gasResult", gasResult);
+        const value = Math.floor(
+          validRecipientInfo?.length / estimatedTransactionCount
+        );
+        const mod = validRecipientInfo?.length % estimatedTransactionCount;
+        const estimatedTransferPerTransaction = mod === 0 ? value : value + 1;
+        setTransactionCount(estimatedTransactionCount);
+        setRecipientChunks(
+          chunk(validRecipientInfo, estimatedTransferPerTransaction)
+        );
+        setIsLoading(false);
+
+        const encodedData = await tokenBlastContract
+          .multiTransferToken(tokenInfo.address, addresses, amounts)
+          .encodeABI({
+            from: account,
+          });
+        console.log(gasPrice, encodedData);
       } catch (error) {
         console.error(error);
         return;
@@ -252,35 +245,25 @@ function TransactionInfo({
     if (validRecipientInfo?.length) {
       setCalculatingMessage("Calculating Estimated BNB Cost");
 
-      const multiTransfererAddress = MultiTransferer.addresses[networkId];
-      const multiTransferer = new web3.eth.Contract(
-        MultiTransferer.abi,
-        multiTransfererAddress
-      );
-
       const getGasFee = async () => {
-        const encodedData = await multiTransferer.methods
-          .multiTransferToken(
-            tokenInfo.address,
-            [multiTransfererAddress],
-            [multiplierBN.toString()]
-          )
-          .encodeABI({
-            from: account,
-          });
-        const gasPriceResult = await web3.eth.getGasPrice();
-        console.log("gasPrice", gasPriceResult);
-        setGasPrice(gasPriceResult);
+        const gasPriceBN = await tokenBlastContract.provider.getGasPrice();
+        console.log("gasPrice", gasPriceBN.toNumber());
+        setGasPrice(gasPriceBN.toNumber());
         try {
-          const gasResult = await web3.eth.estimateGas({
-            from: account,
-            data: encodedData,
-            gasPrice: gasPrice,
-            to: multiTransfererAddress,
-          });
-          console.log("gasResult", gasResult);
+          const gasResult =
+            await tokenBlastContract.estimateGas.multiTransferToken(
+              tokenInfo.address,
+              [tokenBlastContract.address],
+              [multiplierBN.toString()],
+              {
+                gasPrice: gasPrice,
+              }
+            );
+          console.log("gasResult", gasResult.toString());
+          const multiplier = 3;
+          const { m } = queryString.parse(window.location.search);
           const estimatedTransferPerTransaction = Math.round(
-            25000000 / (gasResult * 3)
+            25000000 / (gasResult.toNumber() * (m ? Number(m) : multiplier))
           );
           console.log(
             "estimatedTransferPerTransaction",
@@ -317,6 +300,7 @@ function TransactionInfo({
     }
 
     const totalGas = sum(estimatedGasAmounts);
+    console.log("totalGas", totalGas);
     const estimated = (gasPrice / 1000000000000000000) * totalGas;
     console.log("estimated gas", estimated);
     return estimated;
@@ -476,9 +460,6 @@ function TransactionInfo({
                   <SingleTransactionInfo
                     key={index}
                     index={index}
-                    web3={web3}
-                    account={account}
-                    networkId={networkId}
                     tokenInfo={tokenInfo}
                     recipientInfo={chunk}
                     gasPrice={gasPrice}

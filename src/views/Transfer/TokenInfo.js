@@ -11,6 +11,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import { makeStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import { useWeb3React } from "@web3-react/core";
 import Web3Utils from "web3-utils";
 
 import { getContractABI } from "../../apis/bscscan";
@@ -21,6 +22,7 @@ import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
 import TextField from "../../components/TextField";
 import {
   getBalanceStrWithDecimalsConsidered,
+  getContract,
   numberWithCommas,
 } from "../../utils";
 
@@ -88,9 +90,6 @@ const useStylesInput = makeStyles((theme) => ({
 }));
 
 function TokenInfo({
-  web3,
-  account,
-  networkId,
   isNotEnoughCovac,
   connectWallet,
   activeStep,
@@ -108,6 +107,8 @@ function TokenInfo({
 
   const isTokenInfoGrid = useMediaQuery("(min-width: 620px)");
 
+  const { account, library, chainId } = useWeb3React();
+
   const onTokenAddressClick = () => {
     if (!account) {
       setShowConnectWalletMessage(true);
@@ -122,15 +123,12 @@ function TokenInfo({
   const hideConnectWalletMessage = () => setShowConnectWalletMessage(false);
 
   const getTokenBalance = async (contract) => {
-    const decimals = await contract.methods.decimals().call();
-    const balance = account
-      ? await contract.methods.balanceOf(account).call()
-      : null;
+    const decimals = await contract.decimals();
+    const balanceBN = account ? await contract.balanceOf(account) : null;
     let adjustedBalance = null;
-    let balanceBN = null;
+    let balance = balanceBN.toString();
     if (balance) {
       adjustedBalance = getBalanceStrWithDecimalsConsidered(balance, decimals);
-      balanceBN = new web3.utils.BN(balance);
     }
     return { adjustedBalance, balanceBN };
   };
@@ -166,7 +164,7 @@ function TokenInfo({
     if (!tokenInfo?.isValid) {
       setTokenInfo({ isValid: true, errorMessage: null });
     }
-    const abi = await getContractABI(value, networkId);
+    const abi = await getContractABI(value, chainId);
     if (!abi) {
       setTokenInfo({
         isValid: false,
@@ -176,10 +174,10 @@ function TokenInfo({
       return;
     }
 
-    const contract = new web3.eth.Contract(abi, value);
-    const decimals = await contract.methods.decimals().call();
-    const name = await contract.methods.name().call();
-    const symbol = await contract.methods.symbol().call();
+    const contract = getContract(value, abi, library, account);
+    const decimals = await contract.decimals();
+    const name = await contract.name();
+    const symbol = await contract.symbol();
     const { adjustedBalance, balanceBN } = await getTokenBalance(contract);
     setTokenInfo({
       contract,

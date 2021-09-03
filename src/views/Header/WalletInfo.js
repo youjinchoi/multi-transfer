@@ -4,12 +4,14 @@ import { Typography } from "@material-ui/core";
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
+import { useWeb3React } from "@web3-react/core";
 import clsx from "clsx";
 
 import Covac from "../../abis/Covac.json";
 import covac_icon from "../../assets/covac_icon.png";
 import {
   getBalanceStrWithDecimalsConsidered,
+  getContract,
   numberWithCommas,
 } from "../../utils";
 
@@ -41,35 +43,36 @@ const useStyles = makeStyles(() => ({
 }));
 
 function WalletInfo({
-  web3,
-  account,
-  networkId,
   covacBalanceStr,
   setCovacBalanceStr,
   connectWallet,
   isDesktop,
 }) {
   const classes = useStyles();
+  const { account, library, chainId } = useWeb3React();
 
   useEffect(() => {
     const getCovacBalance = async () => {
-      const covacAddress = Covac.addresses[networkId];
-      const covacContract = new web3.eth.Contract(Covac.abi, covacAddress);
-      const balance = account
-        ? await covacContract.methods.balanceOf(account).call()
-        : null;
-      const decimals = await covacContract.methods.decimals().call();
+      const covacAddress = Covac.addresses[chainId];
+      const covacContract = getContract(
+        covacAddress,
+        Covac.abi,
+        library,
+        account
+      );
+      const balance = await covacContract.balanceOf(account);
+      const decimals = await covacContract.decimals();
       const adjustedBalance = getBalanceStrWithDecimalsConsidered(
-        balance,
+        balance.toString(),
         decimals
       );
       setCovacBalanceStr(adjustedBalance);
     };
-    if (account && web3 && networkId) {
+    if (account && library) {
       getCovacBalance();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, web3, networkId]);
+  }, [account, library]);
 
   const renderWalletAccount = useCallback(() => {
     return (
@@ -101,7 +104,7 @@ function WalletInfo({
   }, [account, connectWallet, isDesktop]);
 
   const renderCovacBalance = useCallback(() => {
-    if (!account || !covacBalanceStr) {
+    if (!account) {
       return null;
     }
     return (

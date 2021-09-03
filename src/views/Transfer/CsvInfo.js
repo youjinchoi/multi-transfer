@@ -13,8 +13,10 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import MuiAlert from "@material-ui/lab/Alert";
+import { useWeb3React } from "@web3-react/core";
 import clsx from "clsx";
 import csv from "csv";
+import { BigNumber } from "ethers";
 import { UnControlled as CodeMirror } from "react-codemirror2";
 import Spreadsheet from "react-spreadsheet";
 import Web3Utils from "web3-utils";
@@ -95,9 +97,6 @@ const exampleCsv = [
 ];
 
 function CsvInfo({
-  web3,
-  account,
-  networkId,
   isNotEnoughCovac,
   tokenInfo,
   setTokenInfo,
@@ -121,6 +120,8 @@ function CsvInfo({
   const [tokenApprovalErrorMessage, setTokenApprovalErrorMessage] =
     useState(null);
   const [allowDuplicateAddress, setAllowDuplicateAddress] = useState(false);
+
+  const { account, chainId } = useWeb3React();
 
   const handleCloseToast = () => {
     setToast(null);
@@ -254,39 +255,40 @@ function CsvInfo({
     setActiveStep(1);
   };
 
-  const approveTokenAndProceed = () => {
-    const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    tokenInfo.contract.methods
+  const approveTokenAndProceed = async () => {
+    const multiTransfererAddress = MultiTransferer.addresses[chainId];
+    const tx = await tokenInfo.contract
       .approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
-      .send({ from: account })
-      .on("transactionHash", (hash) => {
-        // setApprovalTransactionHash(hash);
-      })
-      .on("error", (error) => {
+      .catch((error) => {
         setTokenApprovalErrorMessage(
           error?.message ?? "failed to approve token"
         );
         setIsLoading(false);
         console.error(error);
-      })
-      .then((response) => {
-        console.log("response", response);
-        if (response?.status) {
-          // setApprovalTransactionHash(response?.transactionHash);
-          setActiveStep(2);
-        }
       });
+
+    if (!tx) {
+      return;
+    }
+
+    const receipt = await tx.wait();
+    if (receipt?.status) {
+      setActiveStep(2);
+    } else {
+      setTokenApprovalErrorMessage("failed to approve token");
+      setIsLoading(false);
+      console.error(receipt);
+    }
   };
 
   const handleStep2ToStep3 = () => {
     setIsLoading(true);
-    const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    tokenInfo.contract.methods
+    const multiTransfererAddress = MultiTransferer.addresses[chainId];
+    tokenInfo.contract
       .allowance(account, multiTransfererAddress)
-      .call()
       .then((allowance) => {
         console.log("allowance", allowance);
-        if (new web3.utils.BN(allowance).gte(totalAmountWithDecimalsBN)) {
+        if (BigNumber.from(allowance).gte(totalAmountWithDecimalsBN)) {
           setActiveStep(2);
         } else {
           approveTokenAndProceed();

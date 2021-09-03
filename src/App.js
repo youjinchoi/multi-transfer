@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 
-import "./App.css";
 import { useMediaQuery } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { useWeb3React } from "@web3-react/core";
+import { InjectedConnector } from "@web3-react/injected-connector";
 
+import "./App.css";
 import frame_left from "./assets/frame_left.svg";
 import frame_right from "./assets/frame_right.svg";
-import getWeb3 from "./getWeb3";
+import { SUPPORTED_CHAIN_ID } from "./constants";
 import Header from "./views/Header";
 import Transfer from "./views/Transfer";
 
@@ -37,60 +39,38 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+const injected = new InjectedConnector({
+  supportedChainIds: Object.values(SUPPORTED_CHAIN_ID),
+});
+const connector = injected;
+
 function App() {
   const classes = useStyles();
-  const [web3, setWeb3] = useState(null);
-  const [account, setAccount] = useState(null);
-  const [networkId, setNetworkId] = useState(null);
   const [covacBalanceStr, setCovacBalanceStr] = useState(null);
 
   const showBackgroundImage = useMediaQuery("(min-width: 1500px)");
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const web3 = await getWeb3();
-        const accounts = await web3.eth.getAccounts();
-        const networkId = await web3.eth.net.getId();
-        setWeb3(web3);
-        setAccount(accounts[0]);
-        setNetworkId(networkId);
-        setInterval(async () => {
-          const newAccounts = await web3.eth.getAccounts();
-          setAccount(newAccounts[0]);
-        }, 1000);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    if (!web3) {
-      init();
-    }
-  });
+  const { activate } = useWeb3React();
 
   const connectWallet = async () => {
-    if (!account) {
-      const response = await window.ethereum.send("eth_requestAccounts");
-      if (response?.result) {
-        setAccount(response.result[0]);
-      }
-    }
+    activate(connector, async (error) => {
+      console.error(error);
+    });
   };
+
+  useEffect(() => {
+    connectWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={showBackgroundImage ? classes.app : undefined}>
       <Header
-        web3={web3}
-        account={account}
-        networkId={networkId}
         connectWallet={connectWallet}
         covacBalanceStr={covacBalanceStr}
         setCovacBalanceStr={setCovacBalanceStr}
       />
       <Transfer
-        web3={web3}
-        account={account}
-        networkId={networkId}
         covacBalanceStr={covacBalanceStr}
         connectWallet={connectWallet}
       />

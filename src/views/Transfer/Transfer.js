@@ -11,6 +11,7 @@ import {
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { BigNumber } from "ethers";
 
 import bsc from "../../assets/bsc.svg";
 import CsvInfo from "./CsvInfo";
@@ -149,13 +150,7 @@ function CustomStepIcon(props) {
 
 const steps = ["Input transfer details", "Review", "Transfer"];
 
-function Transfer({
-  web3,
-  account,
-  networkId,
-  covacBalanceStr,
-  connectWallet,
-}) {
+function Transfer({ covacBalanceStr, connectWallet }) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -186,13 +181,10 @@ function Transfer({
   };
 
   useEffect(() => {
-    if (!web3) {
-      return;
-    }
-
     if (!recipientInfo?.length) {
       setTotalAmount(null);
       setTotalAmountWithDecimalsBN(null);
+      return;
     }
     const totalAmount = recipientInfo?.reduce(
       (acc, val) => acc + Number(val.amount),
@@ -204,9 +196,9 @@ function Transfer({
       return;
     }
 
-    const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
-    const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
-    const totalAmountBN = new web3.utils.BN(totalAmount);
+    const decimalsBN = BigNumber.from(tokenInfo.decimals);
+    const multiplierBN = BigNumber.from(10).pow(decimalsBN);
+    const totalAmountBN = BigNumber.from(totalAmount);
     const totalAmountWithDecimalsBN = totalAmountBN.mul(multiplierBN);
     setTotalAmountWithDecimalsBN(totalAmountWithDecimalsBN);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,9 +293,6 @@ function Transfer({
       <div className={classes.root}>
         <Box>
           <TokenInfo
-            web3={web3}
-            account={account}
-            networkId={networkId}
             isNotEnoughCovac={isNotEnoughCovac}
             activeStep={activeStep}
             tokenInfo={tokenInfo}
@@ -326,9 +315,6 @@ function Transfer({
           )}
           {activeStep < 2 && (
             <CsvInfo
-              web3={web3}
-              account={account}
-              networkId={networkId}
               isNotEnoughCovac={isNotEnoughCovac}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
@@ -343,9 +329,6 @@ function Transfer({
           )}
           {activeStep > 1 && (
             <TransactionInfo
-              web3={web3}
-              account={account}
-              networkId={networkId}
               tokenInfo={tokenInfo}
               recipientInfo={recipientInfo}
               setRecipientInfo={setRecipientInfo}

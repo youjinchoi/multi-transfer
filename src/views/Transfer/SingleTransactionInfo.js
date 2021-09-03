@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { Box, CircularProgress, Typography, Link } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -6,9 +6,11 @@ import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { Check, Error } from "@material-ui/icons";
+import { useWeb3React } from "@web3-react/core";
+import { BigNumber } from "ethers";
 
-import MultiTransferer from "../../abis/MultiTransferer.json";
 import { getTransactionUrl } from "../../urls";
+import { getTokenBlastContract } from "../../utils";
 
 const useStyles = makeStyles(() => ({
   lineNumberCell: {
@@ -19,7 +21,7 @@ const useStyles = makeStyles(() => ({
   },
   messageCell: {
     "& a": {
-      fontSize: 13,
+      fontSize: 12,
     },
     overflowWrap: "anywhere",
   },
@@ -60,9 +62,6 @@ const CustomTableCell = withStyles(() => ({
 
 function SingleTransactionInfo({
   index,
-  web3,
-  account,
-  networkId,
   tokenInfo,
   recipientInfo,
   gasPrice,
@@ -76,8 +75,10 @@ function SingleTransactionInfo({
   const [transactionStatus, setTransactionStatus] = useState(null);
   const [gasAmount, setGasAmount] = useState(null);
 
-  const decimalsBN = new web3.utils.BN(tokenInfo.decimals);
-  const multiplierBN = new web3.utils.BN(10).pow(decimalsBN);
+  const { account, library, chainId } = useWeb3React();
+
+  const decimalsBN = BigNumber.from(tokenInfo.decimals);
+  const multiplierBN = BigNumber.from(10).pow(decimalsBN);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => addEstimatedGasAmount(gasAmount), [gasAmount]);
@@ -89,49 +90,31 @@ function SingleTransactionInfo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactionStatus]);
 
-  useEffect(() => {
-    const multiTransfererAddress = MultiTransferer.addresses[networkId];
+  const tokenBlastContract = useMemo(
+    () => getTokenBlastContract(chainId, library, account),
+    [chainId, library, account]
+  );
 
+  useEffect(() => {
     const calculateGas = async () => {
-      const multiTransferer = new web3.eth.Contract(
-        MultiTransferer.abi,
-        multiTransfererAddress
-      );
       const addresses = [];
       const amounts = [];
       recipientInfo.forEach(({ address, amount }) => {
         addresses.push(address);
-        const amountBN = new web3.utils.BN(amount);
+        const amountBN = BigNumber.from(amount);
         amounts.push(amountBN.mul(multiplierBN).toString());
       });
 
       try {
-        const encodedData = await multiTransferer.methods
-          .multiTransferToken(tokenInfo.address, addresses, amounts)
-          .encodeABI({
-            from: account,
-          });
-        web3.eth
-          .estimateGas({
-            from: account,
-            data: encodedData,
+        tokenBlastContract.estimateGas
+          .multiTransferToken(tokenInfo.address, addresses, amounts, {
             gasPrice: gasPrice,
-            to: multiTransfererAddress,
           })
           .then((gasResult) => {
-            console.log("gasResult", gasResult);
-            setGasAmount(gasResult);
+            console.log("gasResult", gasResult.toNumber());
+            setGasAmount(gasResult.toNumber());
           })
           .catch((e) => console.error("error occured", e));
-        /*
-        const gasResult = await web3.eth.estimateGas({
-          from: account,
-          data: encodedData,
-          gasPrice: gasPrice,
-          to: multiTransfererAddress,
-        })
-        console.log('gas', gasResult);
-         */
       } catch (error) {
         setTransactionErrorMessage(error?.message ?? "gas estimation error");
         console.error(error);
@@ -147,42 +130,49 @@ function SingleTransactionInfo({
     if (!startTransfer) {
       return;
     }
-    const multiTransfererAddress = MultiTransferer.addresses[networkId];
-    const multiTransferer = new web3.eth.Contract(
-      MultiTransferer.abi,
-      multiTransfererAddress
-    );
     const addresses = [];
     const amounts = [];
     recipientInfo.forEach(({ address, amount }) => {
       addresses.push(address);
-      const amountBN = new web3.utils.BN(amount);
+      const amountBN = BigNumber.from(amount);
       amounts.push(amountBN.mul(multiplierBN).toString());
     });
-    try {
-      multiTransferer.methods
-        .multiTransferToken(tokenInfo.address, addresses, amounts)
-        .send({
-          from: account,
-          gasPrice: gasPrice,
-        })
-        .on("transactionHash", (hash) => {
-          setTransactionHash(hash);
-          setTransactionStatus("pending");
-        })
-        .on("error", (error) => {
-          setTransactionErrorMessage(
-            error?.message ?? "failed to multi transfer"
-          );
-        })
-        .then((result) => {
-          console.log("transaction finisih", result);
+
+    const transfer = async () => {
+      try {
+        const tx = await tokenBlastContract
+          .multiTransferToken(tokenInfo.address, addresses, amounts, {
+            gasPrice: gasPrice,
+          })
+          .catch((e) => {
+            console.error(e);
+            setTransactionErrorMessage(
+              e?.message ?? "failed to multi transfer"
+            );
+          });
+
+        if (!tx) {
+          return;
+        }
+
+        setTransactionHash(tx.hash);
+        setTransactionStatus("pending");
+
+        const receipt = await tx.wait();
+        if (receipt?.status) {
           setTransactionStatus("finish");
-        });
-    } catch (error) {
-      setTransactionErrorMessage(error?.message ?? "failed to multi transfer");
-      console.error(error);
-    }
+        } else {
+          console.error(receipt);
+          setTransactionErrorMessage("failed to multi transfer");
+        }
+      } catch (error) {
+        setTransactionErrorMessage(
+          error?.message ?? "failed to multi transfer"
+        );
+        console.error(error);
+      }
+    };
+    transfer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTransfer]);
 
@@ -200,7 +190,7 @@ function SingleTransactionInfo({
     } else if (transactionHash) {
       return (
         <Link
-          href={getTransactionUrl(transactionHash, networkId)}
+          href={getTransactionUrl(transactionHash, chainId)}
           target="_blank"
         >
           {transactionHash}
