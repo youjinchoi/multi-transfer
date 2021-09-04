@@ -432,7 +432,7 @@ function TransactionInfo({
           </DialogTitle>
           <DialogContent>
             Please make sure to click confirm button {transactionCount} time(s)
-            on Metamask.
+            on your wallet.
           </DialogContent>
           <DialogActions>
             <Box m={2}>

@@ -45,8 +45,9 @@ const useStyles = makeStyles(() => ({
 function WalletInfo({
   covacBalanceStr,
   setCovacBalanceStr,
-  connectWallet,
   isDesktop,
+  openConnectWalletModal,
+  openWalletActionModal,
 }) {
   const classes = useStyles();
   const { account, library, chainId } = useWeb3React();
@@ -87,7 +88,7 @@ function WalletInfo({
           size="small"
           disableRipple
           className={classes.headerButton}
-          onClick={connectWallet}
+          onClick={account ? openWalletActionModal : openConnectWalletModal}
         >
           {isDesktop && (
             <img
@@ -101,7 +102,7 @@ function WalletInfo({
       </Box>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, connectWallet, isDesktop]);
+  }, [account, openConnectWalletModal, openWalletActionModal, isDesktop]);
 
   const renderCovacBalance = useCallback(() => {
     if (!account) {
@@ -117,14 +118,14 @@ function WalletInfo({
           size="small"
           disableRipple
           className={clsx(classes.headerButton, classes.covacBalance)}
-          onClick={connectWallet}
+          onClick={openWalletActionModal}
         >
           {numberWithCommas(covacBalanceStr)}
         </Button>
       </Box>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, connectWallet, covacBalanceStr]);
+  }, [account, openWalletActionModal, covacBalanceStr]);
 
   if (isDesktop) {
     return (
@@ -139,7 +140,7 @@ function WalletInfo({
     return (
       <>
         <Box my={1}>{renderWalletAccount()}</Box>
-        <Box my={1}>{renderCovacBalance()}</Box>
+        {account && <Box my={1}>{renderCovacBalance()}</Box>}
       </>
     );
   }

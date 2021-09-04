@@ -3,14 +3,15 @@ import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { useWeb3React } from "@web3-react/core";
-import { InjectedConnector } from "@web3-react/injected-connector";
 
 import "./App.css";
 import frame_left from "./assets/frame_left.svg";
 import frame_right from "./assets/frame_right.svg";
-import { SUPPORTED_CHAIN_ID } from "./constants";
+import ConnectWalletModal from "./views/ConnectWalletModal";
 import Header from "./views/Header";
 import Transfer from "./views/Transfer";
+import WalletActionModal from "./views/WalletActionModal";
+import { wallet } from "./walletConfigs";
 
 const useStyles = makeStyles(() => ({
   app: {
@@ -39,40 +40,80 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const injected = new InjectedConnector({
-  supportedChainIds: Object.values(SUPPORTED_CHAIN_ID),
-});
-const connector = injected;
+const walletLocalStorageKey = "tokenBlastWallet";
 
 function App() {
   const classes = useStyles();
   const [covacBalanceStr, setCovacBalanceStr] = useState(null);
+  const [isConnectWalletModalVisible, setIsConnectWalletModalVisible] =
+    useState(false);
+  const [isWalletActionModalVisible, setIsWalletActionModalVisible] =
+    useState(false);
 
   const showBackgroundImage = useMediaQuery("(min-width: 1500px)");
 
-  const { activate } = useWeb3React();
+  const { activate, deactivate } = useWeb3React();
+  // deactivate();
 
-  const connectWallet = async () => {
-    activate(connector, async (error) => {
-      console.error(error);
-    });
+  const connectWallet = async (walletKey) => {
+    const selectedWallet = wallet[walletKey];
+    if (!selectedWallet) {
+      return;
+    }
+    activate(selectedWallet.connector, null, true)
+      .then(() => window.localStorage.setItem(walletLocalStorageKey, walletKey))
+      .catch((error) => console.error("onError", error));
+  };
+
+  const openConnectWalletModal = () => setIsConnectWalletModalVisible(true);
+
+  const openWalletActionModal = () => setIsWalletActionModalVisible(true);
+
+  const disconnectWallet = () => {
+    deactivate();
+    // This localStorage key is set by @web3-react/walletconnect-connector
+    if (window.localStorage.getItem("walletconnect")) {
+      const walletConnectConnector = wallet.walletConnect.connector;
+      walletConnectConnector.close();
+      walletConnectConnector.walletConnectProvider = null;
+    }
+    window.localStorage.removeItem(walletLocalStorageKey);
   };
 
   useEffect(() => {
-    connectWallet();
+    // window.localStorage.removeItem(walletLocalStorageKey);
+    // window.localStorage.removeItem("walletconnect");
+    const storedWalletKey = window.localStorage.getItem(walletLocalStorageKey);
+    const storedWallet = wallet[storedWalletKey];
+    if (storedWallet) {
+      connectWallet(storedWallet.key);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className={showBackgroundImage ? classes.app : undefined}>
       <Header
-        connectWallet={connectWallet}
+        openConnectWalletModal={openConnectWalletModal}
+        openWalletActionModal={openWalletActionModal}
         covacBalanceStr={covacBalanceStr}
         setCovacBalanceStr={setCovacBalanceStr}
       />
+      <ConnectWalletModal
+        isVisible={isConnectWalletModalVisible}
+        setIsVisible={setIsConnectWalletModalVisible}
+        connectWallet={connectWallet}
+      />
+      <WalletActionModal
+        isVisible={isWalletActionModalVisible}
+        setIsVisible={setIsWalletActionModalVisible}
+        covacBalanceStr={covacBalanceStr}
+        openConnectWalletModal={openConnectWalletModal}
+        disconnectWallet={disconnectWallet}
+      />
       <Transfer
         covacBalanceStr={covacBalanceStr}
-        connectWallet={connectWallet}
+        connectWallet={openConnectWalletModal}
       />
     </div>
   );

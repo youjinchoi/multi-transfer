@@ -252,12 +252,10 @@ function TokenInfo({
             maxWidth="md"
           >
             <DialogTitle onClose={hideConnectWalletMessage}>
-              Metamask wallet is not connected
+              Wallet is not connected
             </DialogTitle>
             <DialogContent>
-              <Typography>
-                Please connect your Metamask wallet to proceed
-              </Typography>
+              <Typography>Please connect your wallet to proceed</Typography>
             </DialogContent>
             <DialogActions>
               <Box m={2}>

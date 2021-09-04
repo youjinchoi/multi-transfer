@@ -34,6 +34,9 @@ export const getContract = (address, abi, library, account) =>
   new Contract(address, abi, getProviderOrSigner(library, account));
 
 export const getTokenBlastContract = (chainId, library, account) => {
+  if (!chainId || !library || !account) {
+    return null;
+  }
   return getContract(
     MultiTransferer.addresses[chainId],
     MultiTransferer.abi,

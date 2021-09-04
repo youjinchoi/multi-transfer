@@ -41,12 +41,10 @@ const useStyles = makeStyles(() => ({
 }));
 
 function Header({
-  web3,
-  account,
-  networkId,
-  connectWallet,
   covacBalanceStr,
   setCovacBalanceStr,
+  openConnectWalletModal,
+  openWalletActionModal,
 }) {
   const classes = useStyles();
   const showLinks = useMediaQuery("(min-width: 1000px)");
@@ -60,21 +58,17 @@ function Header({
   const renderWalletInfo = useCallback(
     () => (
       <WalletInfo
-        web3={web3}
-        account={account}
-        networkId={networkId}
         isDesktop={showWalletInfo}
-        connectWallet={connectWallet}
         covacBalanceStr={covacBalanceStr}
         setCovacBalanceStr={setCovacBalanceStr}
+        openConnectWalletModal={openConnectWalletModal}
+        openWalletActionModal={openWalletActionModal}
       />
     ),
     [
-      web3,
-      account,
-      networkId,
       showWalletInfo,
-      connectWallet,
+      openConnectWalletModal,
+      openWalletActionModal,
       covacBalanceStr,
       setCovacBalanceStr,
     ]
