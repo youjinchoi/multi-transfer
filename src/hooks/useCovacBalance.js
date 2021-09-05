@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 
 import { useWeb3React } from "@web3-react/core";
-import { BigNumber } from "ethers";
+import { BigNumber } from "bignumber.js";
 
 import Covac from "../abis/Covac.json";
 import { minimumCovacAmount } from "../configs";
 import { getBalanceStrWithDecimalsConsidered, getContract } from "../utils";
 
-const minimumCovacAmountBN = BigNumber.from(minimumCovacAmount);
+const minimumCovacAmountBN = new BigNumber(minimumCovacAmount).multipliedBy(
+  10 ** 18
+);
 
 const useCovacBalance = () => {
   const { account, chainId, library } = useWeb3React();
@@ -41,7 +43,9 @@ const useCovacBalance = () => {
       }
       const balanceBN = await covacContract.balanceOf(account);
       setBalanceBN(balanceBN);
-      setHasEnoughAmount(balanceBN.gte(minimumCovacAmountBN));
+      setHasEnoughAmount(
+        new BigNumber(balanceBN.toString()).gte(minimumCovacAmountBN)
+      );
       const decimals = await covacContract.decimals();
       const adjustedBalance = getBalanceStrWithDecimalsConsidered(
         balanceBN.toString(),
