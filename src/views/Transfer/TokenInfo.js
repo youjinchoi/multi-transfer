@@ -12,6 +12,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import { makeStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
 import { useWeb3React } from "@web3-react/core";
+import { BigNumber } from "bignumber.js";
 import Web3Utils from "web3-utils";
 
 import { getContractABI } from "../../apis/bscscan";
@@ -93,6 +94,7 @@ const useStylesInput = makeStyles((theme) => ({
 
 function TokenInfo({
   connectWallet,
+  tokenAddressInputRef,
   activeStep,
   tokenInfo,
   setTokenInfo,
@@ -126,11 +128,15 @@ function TokenInfo({
 
   const getTokenBalance = async (contract) => {
     const decimals = await contract.decimals();
-    const balanceBN = account ? await contract.balanceOf(account) : null;
+    const balance = account ? await contract.balanceOf(account) : null;
+    let balanceBN = null;
     let adjustedBalance = null;
-    let balance = balanceBN.toString();
     if (balance) {
-      adjustedBalance = getBalanceStrWithDecimalsConsidered(balance, decimals);
+      balanceBN = new BigNumber(balance.toString());
+      adjustedBalance = getBalanceStrWithDecimalsConsidered(
+        balance.toString(),
+        decimals
+      );
     }
     return { adjustedBalance, balanceBN };
   };
@@ -141,7 +147,6 @@ function TokenInfo({
         const { adjustedBalance, balanceBN } = await getTokenBalance(
           tokenInfo.contract
         );
-        console.log(adjustedBalance, balanceBN, tokenInfo);
         setTokenInfo({ ...tokenInfo, balance: adjustedBalance, balanceBN });
       };
       updateTokenBalance();
@@ -223,6 +228,7 @@ function TokenInfo({
           onChange={onTokenAddressChange}
           disabled={!account || !hasEnoughAmountOfCovac || activeStep !== 0}
           InputProps={{
+            inputRef: tokenAddressInputRef,
             classes: inputClasses,
             startAdornment: (
               <InputAdornment position="start">

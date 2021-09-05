@@ -14,9 +14,9 @@ import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import MuiAlert from "@material-ui/lab/Alert";
 import { useWeb3React } from "@web3-react/core";
+import { BigNumber } from "bignumber.js";
 import clsx from "clsx";
 import csv from "csv";
-import { BigNumber } from "ethers";
 import { UnControlled as CodeMirror } from "react-codemirror2";
 import Spreadsheet from "react-spreadsheet";
 import Web3Utils from "web3-utils";
@@ -32,6 +32,7 @@ import Checkbox from "../../components/Checkbox";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
 import useCovacBalance from "../../hooks/useCovacBalance";
+import { numberWithCommas } from "../../utils";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -121,7 +122,7 @@ function CsvInfo({
     useState(null);
   const [allowDuplicateAddress, setAllowDuplicateAddress] = useState(false);
 
-  const { account, chainId } = useWeb3React();
+  const { account, chainId, library } = useWeb3React();
   const { hasEnoughAmount: hasEnoughAmountOfCovac } = useCovacBalance();
 
   const handleCloseToast = () => {
@@ -181,7 +182,10 @@ function CsvInfo({
       const lines = validInputs?.map(({ line }) => line.join(","));
       setEditorValue(lines.join("\n"));
     } else if (activeStep === 1) {
-      const lines = validInputs?.map(({ line }) => line.join("    "));
+      const lines = validInputs?.map(({ line }) => {
+        const [address, amount] = line;
+        return [address, numberWithCommas(amount)].join("    ");
+      });
       setEditorValue(lines.join("\n"));
     }
   }, [validInputs, activeStep]);
@@ -252,12 +256,19 @@ function CsvInfo({
       address: line[0],
       amount: line[1],
     }));
+    setTokenInfo({
+      ...tokenInfo,
+      sender: account,
+      networkId: chainId,
+      library,
+    });
     setRecipientInfo(recipientInfo);
     setActiveStep(1);
   };
 
   const approveTokenAndProceed = async () => {
-    const multiTransfererAddress = MultiTransferer.addresses[chainId];
+    const multiTransfererAddress =
+      MultiTransferer.addresses[tokenInfo.networkId];
     const tx = await tokenInfo.contract
       .approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
       .catch((error) => {
@@ -288,8 +299,10 @@ function CsvInfo({
     tokenInfo.contract
       .allowance(account, multiTransfererAddress)
       .then((allowance) => {
-        console.log("allowance", allowance);
-        if (BigNumber.from(allowance).gte(totalAmountWithDecimalsBN)) {
+        console.log("allowance", allowance.toString());
+        if (
+          new BigNumber(allowance.toString()).gte(totalAmountWithDecimalsBN)
+        ) {
           setActiveStep(2);
         } else {
           approveTokenAndProceed();
@@ -375,6 +388,7 @@ function CsvInfo({
           options={{
             lineNumbers: true,
             readOnly: true,
+            cursorScrollMargin: activeStep === 0 ? 4 : 5,
           }}
           onChange={onCodeMirrorChange}
           className={clsx({

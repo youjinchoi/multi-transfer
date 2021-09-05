@@ -1,5 +1,7 @@
 .CodeMirror {
   border-radius: 15px;
+  font-size: 16px !important;
+  line-height: 2 !important;
 }
 
 .CodeMirror-vscrollbar {
@@ -11,20 +13,10 @@
   border: 3px solid #CE596A;
 }
 
-/*
-TODO adjust codemirror design similar to figma
 .CodeMirror-line {
-  margin: 4px !important;
-  color: #00636C !important;
-  line-height: 25px !important;
+  padding: 0 8px !important;
 }
 
 .Step2-line .CodeMirror-line {
   border-bottom: 1px solid #D1E4E6 !important;
 }
-
-.CodeMirror-linenumber {
-  line-height: 25px !important;
-}
- */
-

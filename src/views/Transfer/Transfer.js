@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 import {
   Box,
@@ -10,8 +10,8 @@ import {
   Typography,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { BigNumber } from "bignumber.js";
 import clsx from "clsx";
-import { BigNumber } from "ethers";
 
 import bsc from "../../assets/bsc.svg";
 import CsvInfo from "./CsvInfo";
@@ -165,7 +165,12 @@ function Transfer({ connectWallet }) {
     useState(null);
   const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
 
+  const tokenAddressInputRef = useRef(null);
+
   const reset = () => {
+    window.location.reload();
+    /*
+    tokenAddressInputRef.current.value = "";
     setActiveStep(0);
     setTokenInfo(null);
     setValidInputs(null);
@@ -173,6 +178,7 @@ function Transfer({ connectWallet }) {
     setTransactionCount(null);
     setTotalAmount(null);
     setTotalAmountWithDecimalsBN(null);
+     */
   };
 
   useEffect(() => {
@@ -191,10 +197,10 @@ function Transfer({ connectWallet }) {
       return;
     }
 
-    const decimalsBN = BigNumber.from(tokenInfo.decimals);
-    const multiplierBN = BigNumber.from(10).pow(decimalsBN);
-    const totalAmountBN = BigNumber.from(totalAmount);
-    const totalAmountWithDecimalsBN = totalAmountBN.mul(multiplierBN);
+    const decimalsBN = new BigNumber(tokenInfo.decimals);
+    const multiplierBN = new BigNumber(10).pow(decimalsBN);
+    const totalAmountBN = new BigNumber(totalAmount);
+    const totalAmountWithDecimalsBN = totalAmountBN.multipliedBy(multiplierBN);
     setTotalAmountWithDecimalsBN(totalAmountWithDecimalsBN);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientInfo, tokenInfo?.decimals]);
@@ -289,6 +295,7 @@ function Transfer({ connectWallet }) {
         <Box>
           <TokenInfo
             activeStep={activeStep}
+            tokenAddressInputRef={tokenAddressInputRef}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}

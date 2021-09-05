@@ -4,6 +4,7 @@ import { Box, Typography, useMediaQuery } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import TextField from "../../components/TextField";
+import { numberWithCommas } from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -30,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
 
 function TransferInfo({ recipientInfo, totalAmount }) {
   const classes = useStyles();
-  const isGrid = useMediaQuery("(min-width: 620px)");
+  const isFullWidth = useMediaQuery("(max-width: 620px)");
 
   const uniqueRecipientCount = useMemo(() => {
     const recipientSet = new Set(
@@ -40,22 +41,22 @@ function TransferInfo({ recipientInfo, totalAmount }) {
   }, [recipientInfo]);
 
   return (
-    <Box display={isGrid ? "flex" : "block"} justifyContent="center">
-      <Box m={1} className={isGrid && classes.transferInfoGrid}>
+    <Box display={isFullWidth ? "block" : "flex"} justifyContent="center">
+      <Box m={1} className={isFullWidth ? undefined : classes.transferInfoGrid}>
         <Typography className={classes.label}>Total Recipients</Typography>
         <TextField
           disabled
-          value={uniqueRecipientCount}
+          value={numberWithCommas(uniqueRecipientCount)}
           className={classes.inputAlignCenter}
         />
       </Box>
-      <Box m={1} className={isGrid && classes.transferInfoGrid}>
+      <Box m={1} className={isFullWidth ? undefined : classes.transferInfoGrid}>
         <Typography className={classes.label}>
           Total Amount to Transfer
         </Typography>
         <TextField
           disabled
-          value={totalAmount}
+          value={numberWithCommas(totalAmount)}
           className={classes.inputAlignCenter}
         />
       </Box>

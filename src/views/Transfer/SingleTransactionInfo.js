@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 
 import { Box, CircularProgress, Typography, Link } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -6,11 +6,9 @@ import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { Check, Error } from "@material-ui/icons";
-import { useWeb3React } from "@web3-react/core";
-import { BigNumber } from "ethers";
+import { BigNumber } from "bignumber.js";
 
 import { getTransactionUrl } from "../../urls";
-import { getTokenBlastContract } from "../../utils";
 
 const useStyles = makeStyles(() => ({
   lineNumberCell: {
@@ -64,6 +62,7 @@ function SingleTransactionInfo({
   index,
   tokenInfo,
   recipientInfo,
+  tokenBlastContract,
   gasPrice,
   addEstimatedGasAmount,
   increaseFinishedTransactionCount,
@@ -75,10 +74,8 @@ function SingleTransactionInfo({
   const [transactionStatus, setTransactionStatus] = useState(null);
   const [gasAmount, setGasAmount] = useState(null);
 
-  const { account, library, chainId } = useWeb3React();
-
-  const decimalsBN = BigNumber.from(tokenInfo.decimals);
-  const multiplierBN = BigNumber.from(10).pow(decimalsBN);
+  const decimalsBN = new BigNumber(tokenInfo.decimals);
+  const multiplierBN = new BigNumber(10).pow(decimalsBN);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => addEstimatedGasAmount(gasAmount), [gasAmount]);
@@ -90,19 +87,14 @@ function SingleTransactionInfo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactionStatus]);
 
-  const tokenBlastContract = useMemo(
-    () => getTokenBlastContract(chainId, library, account),
-    [chainId, library, account]
-  );
-
   useEffect(() => {
     const calculateGas = async () => {
       const addresses = [];
       const amounts = [];
       recipientInfo.forEach(({ address, amount }) => {
         addresses.push(address);
-        const amountBN = BigNumber.from(amount);
-        amounts.push(amountBN.mul(multiplierBN).toString());
+        const amountBN = new BigNumber(amount);
+        amounts.push(amountBN.multipliedBy(multiplierBN).toString());
       });
 
       try {
@@ -134,8 +126,8 @@ function SingleTransactionInfo({
     const amounts = [];
     recipientInfo.forEach(({ address, amount }) => {
       addresses.push(address);
-      const amountBN = BigNumber.from(amount);
-      amounts.push(amountBN.mul(multiplierBN).toString());
+      const amountBN = new BigNumber(amount);
+      amounts.push(amountBN.multipliedBy(multiplierBN).toString());
     });
 
     const transfer = async () => {
@@ -159,6 +151,7 @@ function SingleTransactionInfo({
         setTransactionStatus("pending");
 
         const receipt = await tx.wait();
+        console.log(`receipt ${index}`, receipt);
         if (receipt?.status) {
           setTransactionStatus("finish");
         } else {
@@ -190,7 +183,7 @@ function SingleTransactionInfo({
     } else if (transactionHash) {
       return (
         <Link
-          href={getTransactionUrl(transactionHash, chainId)}
+          href={getTransactionUrl(transactionHash, tokenInfo.networkId)}
           target="_blank"
         >
           {transactionHash}

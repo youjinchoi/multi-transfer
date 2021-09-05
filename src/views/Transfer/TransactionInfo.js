@@ -14,8 +14,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import withStyles from "@material-ui/core/styles/withStyles";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
-import { useWeb3React } from "@web3-react/core";
-import { BigNumber } from "ethers";
+import { BigNumber } from "bignumber.js";
 import chunk from "lodash/chunk";
 import sum from "lodash/sum";
 import queryString from "query-string";
@@ -127,16 +126,19 @@ function TransactionInfo({
   const [estimatedTransactionCount, setEstimatedTransactionCount] =
     useState(null);
 
-  const { account, library, chainId } = useWeb3React();
-
   const isGrid = useMediaQuery("(min-width: 620px)");
 
-  const decimalsBN = BigNumber.from(tokenInfo.decimals);
-  const multiplierBN = BigNumber.from(10).pow(decimalsBN);
+  const decimalsBN = new BigNumber(tokenInfo.decimals);
+  const multiplierBN = new BigNumber(10).pow(decimalsBN);
 
   const tokenBlastContract = useMemo(
-    () => getTokenBlastContract(chainId, library, account),
-    [chainId, library, account]
+    () =>
+      getTokenBlastContract(
+        tokenInfo.networkId,
+        tokenInfo.library,
+        tokenInfo.sender
+      ),
+    [tokenInfo]
   );
 
   useEffect(() => {
@@ -149,8 +151,8 @@ function TransactionInfo({
           const amounts = [];
           chunk.forEach(({ address, amount }) => {
             addresses.push(address);
-            const amountBN = BigNumber.from(amount);
-            amounts.push(amountBN.mul(multiplierBN).toString());
+            const amountBN = new BigNumber(amount);
+            amounts.push(amountBN.multipliedBy(multiplierBN).toString());
           });
           const failedAddresses =
             await tokenBlastContract.callStatic.multiTransferToken(
@@ -198,8 +200,8 @@ function TransactionInfo({
       const amounts = [];
       testChunk.forEach(({ address, amount }) => {
         addresses.push(address);
-        const amountBN = BigNumber.from(amount);
-        amounts.push(amountBN.mul(multiplierBN).toString());
+        const amountBN = new BigNumber(amount);
+        amounts.push(amountBN.multipliedBy(multiplierBN).toString());
       });
 
       try {
@@ -214,7 +216,7 @@ function TransactionInfo({
             }
           });
 
-        console.log("gasResult", gasResult);
+        console.log("gasResult", gasResult.toString());
         const value = Math.floor(
           validRecipientInfo?.length / estimatedTransactionCount
         );
@@ -229,7 +231,7 @@ function TransactionInfo({
         const encodedData = await tokenBlastContract
           .multiTransferToken(tokenInfo.address, addresses, amounts)
           .encodeABI({
-            from: account,
+            from: tokenInfo.sender,
           });
         console.log(gasPrice, encodedData);
       } catch (error) {
@@ -278,7 +280,7 @@ function TransactionInfo({
           console.log("estimated transaction count", estimatedTransactionCount);
           // setEstimatedTransactionCount(estimatedTransactionCount);
           console.log("estimated transaction count", estimatedTransactionCount);
-          console.log("gasResult", gasResult);
+          console.log("gasResult", gasResult.toString());
           setTransactionCount(estimatedTransactionCount);
           setRecipientChunks(
             chunk(validRecipientInfo, estimatedTransferPerTransaction)
@@ -460,6 +462,7 @@ function TransactionInfo({
                     index={index}
                     tokenInfo={tokenInfo}
                     recipientInfo={chunk}
+                    tokenBlastContract={tokenBlastContract}
                     gasPrice={gasPrice}
                     addEstimatedGasAmount={addEstimatedGasAmount}
                     increaseFinishedTransactionCount={
@@ -472,7 +475,7 @@ function TransactionInfo({
             </Table>
           </Box>
         )}
-        {recipientChunks?.length &&
+        {!!recipientChunks?.length &&
           finishedTransactionCount === recipientChunks?.length && (
             <Box
               m={2}
