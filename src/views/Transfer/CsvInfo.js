@@ -444,7 +444,6 @@ function CsvInfo({
           <DialogActions>
             <Box m={2}>
               <Button
-                autoFocus
                 onClick={hideInputTokenAddressMessage}
                 variant="contained"
                 color="primary"
@@ -474,7 +473,6 @@ function CsvInfo({
           <DialogActions>
             <Box m={2}>
               <Button
-                autoFocus
                 onClick={closeExampleCsv}
                 variant="contained"
                 color="primary"
@@ -516,12 +514,7 @@ function CsvInfo({
           </DialogContent>
           <DialogActions>
             <Box m={2}>
-              <Button
-                autoFocus
-                onClick={handleClose}
-                variant="contained"
-                color="primary"
-              >
+              <Button onClick={handleClose} variant="contained" color="primary">
                 OK
               </Button>
             </Box>

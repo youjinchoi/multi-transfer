@@ -262,7 +262,6 @@ function TokenInfo({
             <DialogActions>
               <Box m={2}>
                 <Button
-                  autoFocus
                   onClick={onClickConnectWallet}
                   variant="contained"
                   color="primary"

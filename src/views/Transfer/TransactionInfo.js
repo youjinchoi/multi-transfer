@@ -410,7 +410,6 @@ function TransactionInfo({
           <DialogActions>
             <Box m={2}>
               <Button
-                autoFocus
                 onClick={handleDialogClose}
                 variant="contained"
                 color="primary"
@@ -437,7 +436,6 @@ function TransactionInfo({
           <DialogActions>
             <Box m={2}>
               <Button
-                autoFocus
                 onClick={proceedTransfer}
                 variant="contained"
                 color="primary"
