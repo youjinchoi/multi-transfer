@@ -40,12 +40,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-function Header({
-  covacBalanceStr,
-  setCovacBalanceStr,
-  openConnectWalletModal,
-  openWalletActionModal,
-}) {
+function Header({ openConnectWalletModal, openWalletActionModal }) {
   const classes = useStyles();
   const showLinks = useMediaQuery("(min-width: 1000px)");
   const showWalletInfo = useMediaQuery("(min-width: 860px)");
@@ -59,19 +54,11 @@ function Header({
     () => (
       <WalletInfo
         isDesktop={showWalletInfo}
-        covacBalanceStr={covacBalanceStr}
-        setCovacBalanceStr={setCovacBalanceStr}
         openConnectWalletModal={openConnectWalletModal}
         openWalletActionModal={openWalletActionModal}
       />
     ),
-    [
-      showWalletInfo,
-      openConnectWalletModal,
-      openWalletActionModal,
-      covacBalanceStr,
-      setCovacBalanceStr,
-    ]
+    [showWalletInfo, openConnectWalletModal, openWalletActionModal]
   );
 
   return (

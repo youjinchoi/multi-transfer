@@ -9,6 +9,7 @@ import { useWeb3React } from "@web3-react/core";
 
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
+import useCovacBalance from "../../hooks/useCovacBalance";
 import { numberWithCommas } from "../../utils";
 
 const useStyles = makeStyles(() => ({
@@ -49,12 +50,12 @@ const useStyles = makeStyles(() => ({
 function WalletActionModal({
   isVisible,
   setIsVisible,
-  covacBalanceStr,
   openConnectWalletModal,
   disconnectWallet: disconnectWalletProp,
 }) {
   const classes = useStyles();
   const { account } = useWeb3React();
+  const { roundedBalanceStr } = useCovacBalance();
 
   const closeModal = () => setIsVisible(false);
 
@@ -94,7 +95,7 @@ function WalletActionModal({
             <Typography className={classes.label}>$COVAC balance</Typography>
           </Box>
           <Box className={classes.walletInfo}>
-            <p>{numberWithCommas(covacBalanceStr)}</p>
+            <p>{numberWithCommas(roundedBalanceStr)}</p>
           </Box>
         </Box>
       </DialogContent>

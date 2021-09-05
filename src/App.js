@@ -7,11 +7,11 @@ import { useWeb3React } from "@web3-react/core";
 import "./App.css";
 import frame_left from "./assets/frame_left.svg";
 import frame_right from "./assets/frame_right.svg";
+import { wallet } from "./configs";
 import ConnectWalletModal from "./views/ConnectWalletModal";
 import Header from "./views/Header";
 import Transfer from "./views/Transfer";
 import WalletActionModal from "./views/WalletActionModal";
-import { wallet } from "./walletConfigs";
 
 const useStyles = makeStyles(() => ({
   app: {
@@ -44,7 +44,6 @@ const walletLocalStorageKey = "tokenBlastWallet";
 
 function App() {
   const classes = useStyles();
-  const [covacBalanceStr, setCovacBalanceStr] = useState(null);
   const [isConnectWalletModalVisible, setIsConnectWalletModalVisible] =
     useState(false);
   const [isWalletActionModalVisible, setIsWalletActionModalVisible] =
@@ -96,8 +95,6 @@ function App() {
       <Header
         openConnectWalletModal={openConnectWalletModal}
         openWalletActionModal={openWalletActionModal}
-        covacBalanceStr={covacBalanceStr}
-        setCovacBalanceStr={setCovacBalanceStr}
       />
       <ConnectWalletModal
         isVisible={isConnectWalletModalVisible}
@@ -107,14 +104,10 @@ function App() {
       <WalletActionModal
         isVisible={isWalletActionModalVisible}
         setIsVisible={setIsWalletActionModalVisible}
-        covacBalanceStr={covacBalanceStr}
         openConnectWalletModal={openConnectWalletModal}
         disconnectWallet={disconnectWallet}
       />
-      <Transfer
-        covacBalanceStr={covacBalanceStr}
-        connectWallet={openConnectWalletModal}
-      />
+      <Transfer connectWallet={openConnectWalletModal} />
     </div>
   );
 }

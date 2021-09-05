@@ -1,19 +1,14 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 
-import { Typography } from "@material-ui/core";
+import { CircularProgress, Typography } from "@material-ui/core";
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
 import { useWeb3React } from "@web3-react/core";
-import clsx from "clsx";
 
-import Covac from "../../abis/Covac.json";
 import covac_icon from "../../assets/covac_icon.png";
-import {
-  getBalanceStrWithDecimalsConsidered,
-  getContract,
-  numberWithCommas,
-} from "../../utils";
+import useCovacBalance from "../../hooks/useCovacBalance";
+import { numberWithCommas } from "../../utils";
 
 const useStyles = makeStyles(() => ({
   headerButton: {
@@ -40,40 +35,19 @@ const useStyles = makeStyles(() => ({
   headerButtonCaption: {
     marginBottom: 6,
   },
+  loading: {
+    color: "#fff",
+  },
 }));
 
 function WalletInfo({
-  covacBalanceStr,
-  setCovacBalanceStr,
   isDesktop,
   openConnectWalletModal,
   openWalletActionModal,
 }) {
   const classes = useStyles();
-  const { account, library, chainId } = useWeb3React();
-
-  useEffect(() => {
-    const getCovacBalance = async () => {
-      const covacAddress = Covac.addresses[chainId];
-      const covacContract = getContract(
-        covacAddress,
-        Covac.abi,
-        library,
-        account
-      );
-      const balance = await covacContract.balanceOf(account);
-      const decimals = await covacContract.decimals();
-      const adjustedBalance = getBalanceStrWithDecimalsConsidered(
-        balance.toString(),
-        decimals
-      );
-      setCovacBalanceStr(adjustedBalance);
-    };
-    if (account && library) {
-      getCovacBalance();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, library]);
+  const { account } = useWeb3React();
+  const { isLoading, roundedBalanceStr } = useCovacBalance();
 
   const renderWalletAccount = useCallback(() => {
     return (
@@ -117,15 +91,19 @@ function WalletInfo({
           variant="contained"
           size="small"
           disableRipple
-          className={clsx(classes.headerButton, classes.covacBalance)}
+          className={classes.headerButton}
           onClick={openWalletActionModal}
         >
-          {numberWithCommas(covacBalanceStr)}
+          {isLoading ? (
+            <CircularProgress size={20} className={classes.loading} />
+          ) : (
+            numberWithCommas(roundedBalanceStr)
+          )}
         </Button>
       </Box>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, openWalletActionModal, covacBalanceStr]);
+  }, [account, openWalletActionModal, isLoading, roundedBalanceStr]);
 
   if (isDesktop) {
     return (

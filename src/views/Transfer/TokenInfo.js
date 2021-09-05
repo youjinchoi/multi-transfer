@@ -20,6 +20,8 @@ import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
 import TextField from "../../components/TextField";
+import { minimumCovacAmount } from "../../configs";
+import useCovacBalance from "../../hooks/useCovacBalance";
 import {
   getBalanceStrWithDecimalsConsidered,
   getContract,
@@ -90,7 +92,6 @@ const useStylesInput = makeStyles((theme) => ({
 }));
 
 function TokenInfo({
-  isNotEnoughCovac,
   connectWallet,
   activeStep,
   tokenInfo,
@@ -108,13 +109,14 @@ function TokenInfo({
   const isTokenInfoGrid = useMediaQuery("(min-width: 620px)");
 
   const { account, library, chainId } = useWeb3React();
+  const { hasEnoughAmount: hasEnoughAmountOfCovac } = useCovacBalance();
 
   const onTokenAddressClick = () => {
     if (!account) {
       setShowConnectWalletMessage(true);
       return;
     }
-    if (isNotEnoughCovac) {
+    if (!hasEnoughAmountOfCovac) {
       setShowBuyCovacMessage(true);
       return;
     }
@@ -219,7 +221,7 @@ function TokenInfo({
         <TextField
           onClick={onTokenAddressClick}
           onChange={onTokenAddressChange}
-          disabled={!account || isNotEnoughCovac || activeStep !== 0}
+          disabled={!account || !hasEnoughAmountOfCovac || activeStep !== 0}
           InputProps={{
             classes: inputClasses,
             startAdornment: (
@@ -282,7 +284,8 @@ function TokenInfo({
             </DialogTitle>
             <DialogContent>
               <Typography>
-                Minimum 1,000,000 $COVAC in your wallet is required to proceed
+                Minimum {numberWithCommas(minimumCovacAmount)} $COVAC in your
+                wallet is required to proceed
               </Typography>
             </DialogContent>
             <DialogActions>

@@ -39,3 +39,5 @@ export const wallet = Object.freeze({
   metamask,
   walletConnect,
 });
+
+export const minimumCovacAmount = 1000000;

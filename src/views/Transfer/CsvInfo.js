@@ -31,6 +31,7 @@ import Button from "../../components/Button";
 import Checkbox from "../../components/Checkbox";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
+import useCovacBalance from "../../hooks/useCovacBalance";
 
 const useStyles = makeStyles(() => ({
   fileUpload: {
@@ -97,7 +98,6 @@ const exampleCsv = [
 ];
 
 function CsvInfo({
-  isNotEnoughCovac,
   tokenInfo,
   setTokenInfo,
   validInputs,
@@ -122,6 +122,7 @@ function CsvInfo({
   const [allowDuplicateAddress, setAllowDuplicateAddress] = useState(false);
 
   const { account, chainId } = useWeb3React();
+  const { hasEnoughAmount: hasEnoughAmountOfCovac } = useCovacBalance();
 
   const handleCloseToast = () => {
     setToast(null);
@@ -305,7 +306,7 @@ function CsvInfo({
   };
 
   const handleNext = () => {
-    if (isNotEnoughCovac) {
+    if (!hasEnoughAmountOfCovac) {
       setShowBuyCovacMessage(true);
       return;
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Box,
@@ -150,7 +150,7 @@ function CustomStepIcon(props) {
 
 const steps = ["Input transfer details", "Review", "Transfer"];
 
-function Transfer({ covacBalanceStr, connectWallet }) {
+function Transfer({ connectWallet }) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -164,11 +164,6 @@ function Transfer({ covacBalanceStr, connectWallet }) {
   const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] =
     useState(null);
   const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
-
-  const isNotEnoughCovac = useMemo(
-    () => Number(covacBalanceStr) < 1000000,
-    [covacBalanceStr]
-  );
 
   const reset = () => {
     setActiveStep(0);
@@ -293,7 +288,6 @@ function Transfer({ covacBalanceStr, connectWallet }) {
       <div className={classes.root}>
         <Box>
           <TokenInfo
-            isNotEnoughCovac={isNotEnoughCovac}
             activeStep={activeStep}
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
@@ -315,7 +309,6 @@ function Transfer({ covacBalanceStr, connectWallet }) {
           )}
           {activeStep < 2 && (
             <CsvInfo
-              isNotEnoughCovac={isNotEnoughCovac}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
               validInputs={validInputs}

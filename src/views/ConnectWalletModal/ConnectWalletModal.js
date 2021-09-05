@@ -8,7 +8,7 @@ import clsx from "clsx";
 
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
-import { wallet } from "../../walletConfigs";
+import { wallet } from "../../configs";
 
 const useStyles = makeStyles(() => ({
   walletOptionContainer: {
