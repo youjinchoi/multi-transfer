@@ -4,8 +4,17 @@ import { Contract } from "ethers";
 import MultiTransferer from "./abis/MultiTransferer.json";
 
 export const numberWithCommas = (number) => {
-  const parts = number?.toString().split(".");
+  if (number !== 0 && number !== "0" && !number) {
+    return null;
+  }
+  if (isNaN(Number(number))) {
+    return null;
+  }
+  const parts = number.toString().split(".");
   if (!parts?.length) {
+    return null;
+  }
+  if (!parts[0]) {
     return null;
   }
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
