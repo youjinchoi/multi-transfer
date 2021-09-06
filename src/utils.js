@@ -2,6 +2,7 @@ import BigNumber from "bignumber.js";
 import { Contract } from "ethers";
 
 import MultiTransferer from "./abis/MultiTransferer.json";
+import { defaultGasMarginRate } from "./configs";
 
 export const numberWithCommas = (number) => {
   if (number !== 0 && number !== "0" && !number) {
@@ -52,4 +53,14 @@ export const getTokenBlastContract = (chainId, library, account) => {
     library,
     account
   );
+};
+
+export const calculateGasMargin = (
+  value,
+  marginRate = defaultGasMarginRate
+) => {
+  if (value !== 0 && !value) {
+    return null;
+  }
+  return new BigNumber(value).multipliedBy(marginRate).toFixed(0);
 };

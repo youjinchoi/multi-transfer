@@ -41,3 +41,5 @@ export const wallet = Object.freeze({
 });
 
 export const minimumCovacAmount = 1000000;
+
+export const defaultGasMarginRate = 2;

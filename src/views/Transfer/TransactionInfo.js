@@ -16,13 +16,13 @@ import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { BigNumber } from "bignumber.js";
 import chunk from "lodash/chunk";
-import sum from "lodash/sum";
 import queryString from "query-string";
 
 import transfer_success from "../../assets/transfer_success.png";
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import TextField from "../../components/TextField";
+import { defaultGasMarginRate } from "../../configs";
 import { getTokenBlastContract } from "../../utils";
 import SingleTransactionInfo from "./SingleTransactionInfo";
 
@@ -130,6 +130,8 @@ function TransactionInfo({
 
   const decimalsBN = new BigNumber(tokenInfo.decimals);
   const multiplierBN = new BigNumber(10).pow(decimalsBN);
+
+  const { g } = queryString.parse(window.location.search);
 
   const tokenBlastContract = useMemo(
     () =>
@@ -297,24 +299,26 @@ function TransactionInfo({
   }, [validRecipientInfo]);
 
   const estimatedCost = useMemo(() => {
-    if (estimatedGasAmounts.length !== recipientChunks.length || !gasPrice) {
+    if (
+      !estimatedGasAmounts?.length ||
+      estimatedGasAmounts.length !== recipientChunks.length ||
+      !gasPrice
+    ) {
       return null;
     }
-
-    const totalGas = sum(estimatedGasAmounts);
-    console.log("totalGas", totalGas);
-    const estimated = (gasPrice / 1000000000000000000) * totalGas;
-    console.log("estimated gas", estimated);
-    return estimated;
+    const totalGasBN = BigNumber.sum(...estimatedGasAmounts);
+    const estimatedPerGas = new BigNumber(gasPrice / 1000000000000000000);
+    const estimatedBN = estimatedPerGas.multipliedBy(totalGasBN);
+    console.log("total estimated BNB", estimatedBN.toString());
+    return estimatedBN;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimatedGasAmounts, gasPrice]);
 
-  const addEstimatedGasAmount = (amount) => {
-    if (!amount) {
+  const addEstimatedGasAmount = (amountBN) => {
+    if (!amountBN) {
       return;
     }
-    console.log("addEstimatedGasAmount", estimatedGasAmounts, amount);
-    setEstimatedGasAmounts([...estimatedGasAmounts, amount]);
+    setEstimatedGasAmounts([...estimatedGasAmounts, amountBN]);
   };
 
   const increaseFinishedTransactionCount = () =>
@@ -348,40 +352,47 @@ function TransactionInfo({
           <CircularProgress className={classes.loading} />
         </Box>
       ) : (
-        <Box
-          display={isGrid ? "flex" : "block"}
-          justifyContent="center"
-          width="100%"
-        >
-          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
-            <Typography className={classes.label}>
-              Total Transaction Count
+        <>
+          <Box
+            display={isGrid ? "flex" : "block"}
+            justifyContent="center"
+            width="100%"
+          >
+            <Box m={1} className={isGrid && classes.transactionInfoGrid}>
+              <Typography className={classes.label}>
+                Total Transaction Count
+              </Typography>
+              <TextField
+                disabled
+                value={transactionCount}
+                className={classes.inputAlignCenter}
+              />
+            </Box>
+            <Box m={1} className={isGrid && classes.transactionInfoGrid}>
+              <Typography className={classes.label}>Gas Price(Gwei)</Typography>
+              <TextField
+                disabled
+                value={gasPrice / 1000000000}
+                className={classes.inputAlignCenter}
+              />
+            </Box>
+            <Box m={1} className={isGrid && classes.transactionInfoGrid}>
+              <Typography className={classes.label}>
+                Estimated BNB Cost
+              </Typography>
+              <TextField
+                disabled
+                value={estimatedCost?.toFixed(6)}
+                className={classes.inputAlignCenter}
+              />
+            </Box>
+          </Box>
+          <Box m={1}>
+            <Typography>
+              *actual BNB cost will be lower than estimation
             </Typography>
-            <TextField
-              disabled
-              value={transactionCount}
-              className={classes.inputAlignCenter}
-            />
           </Box>
-          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
-            <Typography className={classes.label}>Gas Price(Gwei)</Typography>
-            <TextField
-              disabled
-              value={gasPrice / 1000000000}
-              className={classes.inputAlignCenter}
-            />
-          </Box>
-          <Box m={1} className={isGrid && classes.transactionInfoGrid}>
-            <Typography className={classes.label}>
-              Estimated BNB Cost
-            </Typography>
-            <TextField
-              disabled
-              value={estimatedCost.toFixed(6)}
-              className={classes.inputAlignCenter}
-            />
-          </Box>
-        </Box>
+        </>
       )}
       {!!failedAddresses?.length && (
         <Dialog
@@ -469,6 +480,7 @@ function TransactionInfo({
                       increaseFinishedTransactionCount
                     }
                     startTransfer={startTransfer}
+                    gasMarginRate={g ? Number(g) : defaultGasMarginRate}
                   />
                 ))}
               </TableBody>

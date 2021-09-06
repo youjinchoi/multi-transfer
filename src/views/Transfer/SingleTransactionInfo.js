@@ -9,6 +9,7 @@ import { Check, Error } from "@material-ui/icons";
 import { BigNumber } from "bignumber.js";
 
 import { getTransactionUrl } from "../../urls";
+import { calculateGasMargin } from "../../utils";
 
 const useStyles = makeStyles(() => ({
   lineNumberCell: {
@@ -67,6 +68,7 @@ function SingleTransactionInfo({
   addEstimatedGasAmount,
   increaseFinishedTransactionCount,
   startTransfer,
+  gasMarginRate,
 }) {
   const classes = useStyles();
   const [transactionHash, setTransactionHash] = useState(null);
@@ -103,8 +105,13 @@ function SingleTransactionInfo({
             gasPrice: gasPrice,
           })
           .then((gasResult) => {
-            console.log("gasResult", gasResult.toNumber());
-            setGasAmount(gasResult.toNumber());
+            console.log(`gasResult ${index}`, gasResult.toString());
+            const gasAmountWithMarginStr = calculateGasMargin(
+              gasResult.toString(),
+              gasMarginRate
+            );
+            console.log(`gasAmountWithMargin ${index}`, gasAmountWithMarginStr);
+            setGasAmount(new BigNumber(gasAmountWithMarginStr));
           })
           .catch((e) => console.error("error occured", e));
       } catch (error) {
@@ -135,6 +142,7 @@ function SingleTransactionInfo({
         const tx = await tokenBlastContract
           .multiTransferToken(tokenInfo.address, addresses, amounts, {
             gasPrice: gasPrice,
+            gasLimit: gasAmount.toFixed(0),
           })
           .catch((e) => {
             console.error(e);
@@ -153,6 +161,7 @@ function SingleTransactionInfo({
         const receipt = await tx.wait();
         console.log(`receipt ${index}`, receipt);
         if (receipt?.status) {
+          console.log(`gas used ${index}`, receipt.gasUsed.toString());
           setTransactionStatus("finish");
         } else {
           console.error(receipt);
