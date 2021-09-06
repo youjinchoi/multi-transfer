@@ -152,7 +152,7 @@ function TransactionInfo({
           chunk.forEach(({ address, amount }) => {
             addresses.push(address);
             const amountBN = new BigNumber(amount);
-            amounts.push(amountBN.multipliedBy(multiplierBN).toString());
+            amounts.push(amountBN.multipliedBy(multiplierBN).toFixed());
           });
           const failedAddresses =
             await tokenBlastContract.callStatic.multiTransferToken(

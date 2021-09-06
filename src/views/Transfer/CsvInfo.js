@@ -270,7 +270,7 @@ function CsvInfo({
     const multiTransfererAddress =
       MultiTransferer.addresses[tokenInfo.networkId];
     const tx = await tokenInfo.contract
-      .approve(multiTransfererAddress, totalAmountWithDecimalsBN.toString())
+      .approve(multiTransfererAddress, totalAmountWithDecimalsBN.toFixed())
       .catch((error) => {
         setTokenApprovalErrorMessage(
           error?.message ?? "failed to approve token"
