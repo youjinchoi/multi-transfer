@@ -8,6 +8,8 @@ import clsx from "clsx";
 
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
+import Metamask from "../../components/Logos/Metamask";
+import WalletConnect from "../../components/Logos/WalletConnect";
 import { wallet } from "../../configs";
 
 const useStyles = makeStyles(() => ({
@@ -34,6 +36,17 @@ const useStyles = makeStyles(() => ({
 }));
 
 const wallets = Object.values(wallet);
+
+const getLogo = (walletKey, isMobile) => {
+  const width = isMobile ? 60 : 100;
+  if (walletKey === "metamask") {
+    return <Metamask width={width} />;
+  } else if (walletKey === "walletConnect") {
+    return <WalletConnect width={width} />;
+  } else {
+    return null;
+  }
+};
 
 function ConnectWalletModal({ isVisible, setIsVisible, connectWallet }) {
   const classes = useStyles();
@@ -73,11 +86,7 @@ function ConnectWalletModal({ isVisible, setIsVisible, connectWallet }) {
                     [classes.walletImageWrapperMobile]: isMobile,
                   })}
                 >
-                  <img
-                    src={wallet.image}
-                    width={isMobile ? 60 : 100}
-                    alt={`${wallet.name} logo`}
-                  />
+                  {getLogo(wallet.key, isMobile)}
                 </Box>
                 <Typography style={{ color: "#00636C" }}>
                   {wallet.name}
