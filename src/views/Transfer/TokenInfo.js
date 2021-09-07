@@ -93,7 +93,7 @@ const useStylesInput = makeStyles((theme) => ({
 }));
 
 function TokenInfo({
-  connectWallet,
+  openConnectWalletModal,
   tokenAddressInputRef,
   activeStep,
   tokenInfo,
@@ -211,7 +211,7 @@ function TokenInfo({
   }, [tokenInfo?.balanceBN, totalAmountWithDecimalsBN]);
 
   const onClickConnectWallet = () => {
-    connectWallet();
+    openConnectWalletModal();
     hideConnectWalletMessage();
   };
 
@@ -272,7 +272,7 @@ function TokenInfo({
                   variant="contained"
                   color="primary"
                 >
-                  Connect
+                  Connect Wallet
                 </Button>
               </Box>
             </DialogActions>

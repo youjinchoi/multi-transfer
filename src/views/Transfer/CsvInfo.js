@@ -99,6 +99,7 @@ const exampleCsv = [
 ];
 
 function CsvInfo({
+  openConnectWalletModal,
   tokenInfo,
   setTokenInfo,
   validInputs,
@@ -556,9 +557,9 @@ function CsvInfo({
               disabled={
                 isLoading || (activeStep === 1 && tokenInfo?.notEnoughBalance)
               }
-              onClick={handleNext}
+              onClick={account ? handleNext : openConnectWalletModal}
             >
-              Next
+              {account ? "Next" : "Connect Wallet"}
             </Button>
             {isLoading && (
               <CircularProgress size={24} className={classes.buttonProgress} />

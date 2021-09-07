@@ -2,11 +2,12 @@ import React, { useCallback } from "react";
 
 import { CircularProgress, Typography } from "@material-ui/core";
 import Box from "@material-ui/core/Box";
-import Button from "@material-ui/core/Button";
+import MaterialButton from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
 import { useWeb3React } from "@web3-react/core";
 
 import covac_icon from "../../assets/covac_icon.png";
+import Button from "../../components/Button";
 import useCovacBalance from "../../hooks/useCovacBalance";
 import { numberWithCommas } from "../../utils";
 
@@ -57,22 +58,32 @@ function WalletInfo({
             Wallet address:
           </Typography>
         )}
-        <Button
-          variant="contained"
-          size="small"
-          disableRipple
-          className={classes.headerButton}
-          onClick={account ? openWalletActionModal : openConnectWalletModal}
-        >
-          {isDesktop && (
-            <img
-              src={covac_icon}
-              alt="covac icon"
-              className={classes.covacLogoInWalletAddress}
-            />
-          )}
-          {account ? account : "Connect"}
-        </Button>
+        {account ? (
+          <MaterialButton
+            variant="contained"
+            size="small"
+            disableRipple
+            className={classes.headerButton}
+            onClick={openWalletActionModal}
+          >
+            {isDesktop && (
+              <img
+                src={covac_icon}
+                alt="covac icon"
+                className={classes.covacLogoInWalletAddress}
+              />
+            )}
+            {account}
+          </MaterialButton>
+        ) : (
+          <Button
+            variant="contained"
+            disableRipple
+            onClick={openConnectWalletModal}
+          >
+            Connect Wallet
+          </Button>
+        )}
       </Box>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,7 +98,7 @@ function WalletInfo({
         <Typography variant="caption" className={classes.headerButtonCaption}>
           Your $COVAC balance:
         </Typography>
-        <Button
+        <MaterialButton
           variant="contained"
           size="small"
           disableRipple
@@ -99,7 +110,7 @@ function WalletInfo({
           ) : (
             numberWithCommas(roundedBalanceStr)
           )}
-        </Button>
+        </MaterialButton>
       </Box>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

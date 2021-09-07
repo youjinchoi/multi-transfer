@@ -45,7 +45,7 @@ function Header({ openConnectWalletModal, openWalletActionModal }) {
   const showLinks = useMediaQuery("(min-width: 1000px)");
   const showWalletInfo = useMediaQuery("(min-width: 860px)");
   const [isWalletInfoMobileExpanded, setIsWalletInfoMobileExpanded] =
-    useState(false);
+    useState(true);
 
   const toggleWalletInfoMobile = () =>
     setIsWalletInfoMobileExpanded(!isWalletInfoMobileExpanded);

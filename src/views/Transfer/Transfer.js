@@ -150,7 +150,7 @@ function CustomStepIcon(props) {
 
 const steps = ["Input transfer details", "Review", "Transfer"];
 
-function Transfer({ connectWallet }) {
+function Transfer({ openConnectWalletModal }) {
   const classes = useStyles();
   const customStepOneLabelStyles = useCustomStepOneLabelStyles();
   const customStepTwoLabelStyles = useCustomStepTwoLabelStyles();
@@ -299,7 +299,7 @@ function Transfer({ connectWallet }) {
             tokenInfo={tokenInfo}
             setTokenInfo={setTokenInfo}
             totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
-            connectWallet={connectWallet}
+            openConnectWalletModal={openConnectWalletModal}
             showBuyCovacMessage={showBuyCovacMessage}
             setShowBuyCovacMessage={setShowBuyCovacMessage}
           />
@@ -316,6 +316,7 @@ function Transfer({ connectWallet }) {
           )}
           {activeStep < 2 && (
             <CsvInfo
+              openConnectWalletModal={openConnectWalletModal}
               tokenInfo={tokenInfo}
               setTokenInfo={setTokenInfo}
               validInputs={validInputs}

@@ -147,7 +147,7 @@ function App() {
         openConnectWalletModal={openConnectWalletModal}
         disconnectWallet={disconnectWallet}
       />
-      <Transfer connectWallet={openConnectWalletModal} />
+      <Transfer openConnectWalletModal={openConnectWalletModal} />
     </div>
   );
 }
