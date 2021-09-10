@@ -264,7 +264,7 @@ function TransactionInfo({
               }
             );
           console.log("gasResult", gasResult.toString());
-          const multiplier = 3;
+          const multiplier = 5;
           const { m } = queryString.parse(window.location.search);
           const estimatedTransferPerTransaction = Math.round(
             25000000 / (gasResult.toNumber() * (m ? Number(m) : multiplier))

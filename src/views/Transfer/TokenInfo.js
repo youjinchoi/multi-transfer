@@ -204,7 +204,7 @@ function TokenInfo({
       setTokenInfo({ ...tokenInfo, notEnoughBalance: false });
       return;
     }
-    if (tokenInfo?.balanceBN.lte(totalAmountWithDecimalsBN)) {
+    if (tokenInfo?.balanceBN.lt(totalAmountWithDecimalsBN)) {
       setTokenInfo({ ...tokenInfo, notEnoughBalance: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
