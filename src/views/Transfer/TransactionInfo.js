@@ -46,6 +46,7 @@ const useStyles = makeStyles((theme) => ({
   },
   loading: {
     color: "#FFFFFF",
+    marginTop: 8,
   },
   transactionInfoGrid: {
     display: "flex",
@@ -120,11 +121,9 @@ function TransactionInfo({
   const [startTransfer, setStartTransfer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [calculatingMessage, setCalculatingMessage] = useState(
-    "Calculating Transaction Count"
+    "Step 1. Validating Recipient Addresses"
   );
   const [failedAddresses, setFailedAddresses] = useState(null);
-  const [estimatedTransactionCount, setEstimatedTransactionCount] =
-    useState(null);
 
   const isGrid = useMediaQuery("(min-width: 620px)");
 
@@ -132,6 +131,7 @@ function TransactionInfo({
   const multiplierBN = new BigNumber(10).pow(decimalsBN);
 
   const { g } = queryString.parse(window.location.search);
+  const gasMarginRate = g ? Number(g) : defaultGasMarginRate;
 
   const tokenBlastContract = useMemo(
     () =>
@@ -170,13 +170,14 @@ function TransactionInfo({
           });
         })
       );
-      console.log("failedAddressSet", failedAddressSet);
+
       if (failedAddressSet.size > 0) {
-        setFailedAddresses(Array.from(failedAddressSet));
+        const failedAddresses = Array.from(failedAddressSet);
+        console.log("failedAddress", failedAddresses);
+        setFailedAddresses(failedAddresses);
         const filtered = recipientInfo.filter(
           (recipient) => !failedAddressSet.has(recipient.address)
         );
-        console.log("filtered", filtered);
         setValidRecipientInfo(filtered);
         setRecipientInfo(filtered);
       } else {
@@ -189,111 +190,75 @@ function TransactionInfo({
   }, []);
 
   useEffect(() => {
-    if (!estimatedTransactionCount) {
-      return;
-    }
-    const checkGasFee = async (estimatedTransactionCount) => {
-      console.log("checkGasFee", estimatedTransactionCount);
-      const testChunkSize =
-        validRecipientInfo?.length / estimatedTransactionCount;
-      console.log("testChunkSize", testChunkSize);
-      const testChunk = validRecipientInfo.slice(0, testChunkSize + 1);
-      const addresses = [];
-      const amounts = [];
-      testChunk.forEach(({ address, amount }) => {
-        addresses.push(address);
-        const amountBN = new BigNumber(amount);
-        amounts.push(amountBN.multipliedBy(multiplierBN).toString());
-      });
-
-      try {
-        const gasPrice = 10;
-        const gasResult = await tokenBlastContract.estimateGas
-          .multiTransferToken(tokenInfo.address, addresses, amounts)
-          .catch((e) => {
-            console.error("error occured", e);
-            if (e.message.startsWith("gas required exceeds allowance")) {
-              console.log("adjust transaction count");
-              setEstimatedTransactionCount(estimatedTransactionCount + 1);
-            }
-          });
-
-        console.log("gasResult", gasResult.toString());
-        const value = Math.floor(
-          validRecipientInfo?.length / estimatedTransactionCount
-        );
-        const mod = validRecipientInfo?.length % estimatedTransactionCount;
-        const estimatedTransferPerTransaction = mod === 0 ? value : value + 1;
-        setTransactionCount(estimatedTransactionCount);
-        setRecipientChunks(
-          chunk(validRecipientInfo, estimatedTransferPerTransaction)
-        );
-        setIsLoading(false);
-
-        const encodedData = await tokenBlastContract
-          .multiTransferToken(tokenInfo.address, addresses, amounts)
-          .encodeABI({
-            from: tokenInfo.sender,
-          });
-        console.log(gasPrice, encodedData);
-      } catch (error) {
-        console.error(error);
-        return;
-      }
-    };
-    checkGasFee(estimatedTransactionCount);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estimatedTransactionCount]);
-
-  useEffect(() => {
     if (validRecipientInfo?.length) {
-      setCalculatingMessage("Calculating Estimated BNB Cost");
+      setCalculatingMessage("Step 2. Calculating Transaction Count");
+      setIsLoading(true);
 
-      const getGasFee = async () => {
+      const calculateTransactionCount = async () => {
         const gasPriceBN = await tokenBlastContract.provider.getGasPrice();
+        const block = await tokenBlastContract.provider.getBlock("latest");
+        const gasLimitWithMarginRateBN = new BigNumber(
+          block.gasLimit.toString()
+        ).div(new BigNumber(gasMarginRate));
+        console.log("gasLimit", block.gasLimit.toString());
+        console.log("gasLimitWithMargin", gasLimitWithMarginRateBN.toString());
         console.log("gasPrice", gasPriceBN.toNumber());
         setGasPrice(gasPriceBN.toNumber());
-        try {
-          const gasResult =
-            await tokenBlastContract.estimateGas.multiTransferToken(
-              tokenInfo.address,
-              [tokenBlastContract.address],
-              [multiplierBN.toString()],
-              {
-                gasPrice: gasPrice,
-              }
-            );
-          console.log("gasResult", gasResult.toString());
-          const multiplier = 5;
-          const { m } = queryString.parse(window.location.search);
-          const estimatedTransferPerTransaction = Math.round(
-            25000000 / (gasResult.toNumber() * (m ? Number(m) : multiplier))
-          );
+        let maxSuccessCount = 0;
+        let minFailedCount = validRecipientInfo?.length;
+        let count = validRecipientInfo?.length;
+        while (count !== maxSuccessCount) {
           console.log(
-            "estimatedTransferPerTransaction",
-            estimatedTransferPerTransaction
+            "count, maxSuccessCount, minFailedCount",
+            count,
+            maxSuccessCount,
+            minFailedCount
           );
-          const value = Math.floor(
-            validRecipientInfo?.length / estimatedTransferPerTransaction
-          );
-          const mod =
-            validRecipientInfo?.length % estimatedTransferPerTransaction;
-          const estimatedTransactionCount = mod === 0 ? value : value + 1;
-          console.log("estimated transaction count", estimatedTransactionCount);
-          // setEstimatedTransactionCount(estimatedTransactionCount);
-          console.log("estimated transaction count", estimatedTransactionCount);
-          console.log("gasResult", gasResult.toString());
-          setTransactionCount(estimatedTransactionCount);
-          setRecipientChunks(
-            chunk(validRecipientInfo, estimatedTransferPerTransaction)
-          );
-          setIsLoading(false);
-        } catch (e) {
-          console.error(e);
+          const tempRecipients = validRecipientInfo.slice(0, count - 1);
+          const addresses = [];
+          const amounts = [];
+          tempRecipients.forEach(({ address, amount }) => {
+            addresses.push(address);
+            const amountBN = new BigNumber(amount);
+            amounts.push(amountBN.multipliedBy(multiplierBN).toFixed());
+          });
+
+          try {
+            const gasResult =
+              await tokenBlastContract.estimateGas.multiTransferToken(
+                tokenInfo.address,
+                addresses,
+                amounts,
+                {
+                  gasPrice: gasPrice,
+                }
+              );
+            console.log("addresses and gasResult", count, gasResult.toString());
+            if (
+              new BigNumber(gasResult.toString()).gt(gasLimitWithMarginRateBN)
+            ) {
+              minFailedCount = Math.min(minFailedCount, count);
+            } else {
+              maxSuccessCount = Math.max(count, maxSuccessCount);
+            }
+          } catch (error) {
+            console.error("error while calculating transaction count", error);
+            minFailedCount = Math.min(minFailedCount, count);
+          }
+          count = Math.floor((maxSuccessCount + minFailedCount) / 2);
         }
+        const recipientCountPerTransaction =
+          count === validRecipientInfo?.length
+            ? count
+            : Math.floor(count / 10) * 10;
+
+        const chunks = chunk(validRecipientInfo, recipientCountPerTransaction);
+        setRecipientChunks(chunks);
+        setTransactionCount(chunks.length);
+        setCalculatingMessage("Step 3. Calculating Estimated BNB Cost");
       };
 
-      getGasFee();
+      calculateTransactionCount();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validRecipientInfo]);
@@ -313,6 +278,12 @@ function TransactionInfo({
     return estimatedBN;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimatedGasAmounts, gasPrice]);
+
+  useEffect(() => {
+    if (estimatedCost) {
+      setIsLoading(false);
+    }
+  }, [estimatedCost]);
 
   const addEstimatedGasAmount = (amountBN) => {
     if (!amountBN) {

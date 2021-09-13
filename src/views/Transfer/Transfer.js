@@ -160,7 +160,7 @@ function Transfer({ openConnectWalletModal }) {
   const [validInputs, setValidInputs] = useState(null);
   const [recipientInfo, setRecipientInfo] = useState(null);
   const [transactionCount, setTransactionCount] = useState(null);
-  const [totalAmount, setTotalAmount] = useState(null);
+  const [totalAmountBN, setTotalAmountBN] = useState(null);
   const [totalAmountWithDecimalsBN, setTotalAmountWithDecimalsBN] =
     useState(null);
   const [showBuyCovacMessage, setShowBuyCovacMessage] = useState(false);
@@ -183,15 +183,16 @@ function Transfer({ openConnectWalletModal }) {
 
   useEffect(() => {
     if (!recipientInfo?.length) {
-      setTotalAmount(null);
+      setTotalAmountBN(null);
       setTotalAmountWithDecimalsBN(null);
       return;
     }
-    const totalAmount = recipientInfo?.reduce(
-      (acc, val) => acc + Number(val.amount),
-      0
+    const initial = new BigNumber(0);
+    const totalBN = recipientInfo?.reduce(
+      (acc, val) => acc.plus(new BigNumber(val.amount)),
+      initial
     );
-    setTotalAmount(totalAmount);
+    setTotalAmountBN(totalBN);
 
     if (!tokenInfo?.decimals) {
       return;
@@ -199,8 +200,7 @@ function Transfer({ openConnectWalletModal }) {
 
     const decimalsBN = new BigNumber(tokenInfo.decimals);
     const multiplierBN = new BigNumber(10).pow(decimalsBN);
-    const totalAmountBN = new BigNumber(totalAmount);
-    const totalAmountWithDecimalsBN = totalAmountBN.multipliedBy(multiplierBN);
+    const totalAmountWithDecimalsBN = totalBN.multipliedBy(multiplierBN);
     setTotalAmountWithDecimalsBN(totalAmountWithDecimalsBN);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientInfo, tokenInfo?.decimals]);
@@ -310,7 +310,7 @@ function Transfer({ openConnectWalletModal }) {
               </Box>
               <TransferInfo
                 recipientInfo={recipientInfo}
-                totalAmount={totalAmount}
+                totalAmountBN={totalAmountBN}
               />
             </>
           )}
@@ -336,9 +336,6 @@ function Transfer({ openConnectWalletModal }) {
               setActiveStep={setActiveStep}
               transactionCount={transactionCount}
               setTransactionCount={setTransactionCount}
-              totalAmount={totalAmount}
-              setTotalAmount={setTotalAmount}
-              totalAmountWithDecimalsBN={totalAmountWithDecimalsBN}
               reset={reset}
             />
           )}

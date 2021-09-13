@@ -74,13 +74,13 @@ function SingleTransactionInfo({
   const [transactionHash, setTransactionHash] = useState(null);
   const [transactionErrorMessage, setTransactionErrorMessage] = useState(null);
   const [transactionStatus, setTransactionStatus] = useState(null);
-  const [gasAmount, setGasAmount] = useState(null);
+  const [gasAmountBN, setGasAmountBN] = useState(null);
 
   const decimalsBN = new BigNumber(tokenInfo.decimals);
   const multiplierBN = new BigNumber(10).pow(decimalsBN);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => addEstimatedGasAmount(gasAmount), [gasAmount]);
+  useEffect(() => addEstimatedGasAmount(gasAmountBN), [gasAmountBN]);
 
   useEffect(() => {
     if (transactionStatus === "finish") {
@@ -110,10 +110,12 @@ function SingleTransactionInfo({
               gasResult.toString(),
               gasMarginRate
             );
-            console.log(`gasAmountWithMargin ${index}`, gasAmountWithMarginStr);
-            setGasAmount(new BigNumber(gasAmountWithMarginStr));
-          })
-          .catch((e) => console.error("error occured", e));
+            console.log(
+              `gasAmountWithMargin ${index}, ${addresses.length} addresses,`,
+              gasAmountWithMarginStr
+            );
+            setGasAmountBN(new BigNumber(gasAmountWithMarginStr));
+          });
       } catch (error) {
         setTransactionErrorMessage(error?.message ?? "gas estimation error");
         console.error(error);
@@ -139,10 +141,15 @@ function SingleTransactionInfo({
 
     const transfer = async () => {
       try {
+        const block = await tokenBlastContract.provider.getBlock("latest");
+        const blockGasLimitBN = new BigNumber(block.gasLimit.toString());
+        const gasLimit = gasAmountBN.lte(blockGasLimitBN)
+          ? gasAmountBN.toFixed(0)
+          : blockGasLimitBN.toFixed(0);
         const tx = await tokenBlastContract
           .multiTransferToken(tokenInfo.address, addresses, amounts, {
-            gasPrice: gasPrice,
-            gasLimit: gasAmount.toFixed(0),
+            gasPrice,
+            gasLimit,
           })
           .catch((e) => {
             console.error(e);

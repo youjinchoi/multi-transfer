@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function TransferInfo({ recipientInfo, totalAmount }) {
+function TransferInfo({ recipientInfo, totalAmountBN }) {
   const classes = useStyles();
   const isFullWidth = useMediaQuery("(max-width: 620px)");
 
@@ -56,7 +56,7 @@ function TransferInfo({ recipientInfo, totalAmount }) {
         </Typography>
         <TextField
           disabled
-          value={numberWithCommas(totalAmount)}
+          value={numberWithCommas(totalAmountBN?.toString())}
           className={classes.inputAlignCenter}
         />
       </Box>
