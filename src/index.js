@@ -3,6 +3,7 @@ import React from "react";
 import { Web3ReactProvider } from "@web3-react/core";
 import { ethers } from "ethers";
 import ReactDOM from "react-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
@@ -18,7 +19,9 @@ const getLibrary = (provider) => {
 ReactDOM.render(
   <React.StrictMode>
     <Web3ReactProvider getLibrary={getLibrary}>
-      <App />
+      <Router>
+        <App />
+      </Router>
     </Web3ReactProvider>
   </React.StrictMode>,
   document.getElementById("root")

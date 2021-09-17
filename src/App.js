@@ -12,14 +12,18 @@ import {
   UserRejectedRequestError as UserRejectedRequestErrorWalletConnect,
   WalletConnectConnector,
 } from "@web3-react/walletconnect-connector";
+import clsx from "clsx";
+import { Switch, Route } from "react-router-dom";
 
 import "./App.css";
 import frame_left from "./assets/frame_left.svg";
 import frame_right from "./assets/frame_right.svg";
 import ErrorMessage from "./components/ErrorMessage";
 import { wallet } from "./configs";
+import usePageType, { PAGE_TYPE } from "./hooks/usePageType";
 import ConnectWalletModal from "./views/ConnectWalletModal";
 import Header from "./views/Header";
+import HowToUse from "./views/HowToUse";
 import Transfer from "./views/Transfer";
 import WalletActionModal from "./views/WalletActionModal";
 
@@ -61,6 +65,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState(null);
 
   const showBackgroundImage = useMediaQuery("(min-width: 1500px)");
+  const pageType = usePageType();
 
   const { activate, deactivate } = useWeb3React();
 
@@ -126,7 +131,11 @@ function App() {
   }, []);
 
   return (
-    <div className={showBackgroundImage ? classes.app : undefined}>
+    <div
+      className={clsx({
+        [classes.app]: showBackgroundImage && pageType === PAGE_TYPE.transfer,
+      })}
+    >
       <Header
         openConnectWalletModal={openConnectWalletModal}
         openWalletActionModal={openWalletActionModal}
@@ -147,7 +156,14 @@ function App() {
         openConnectWalletModal={openConnectWalletModal}
         disconnectWallet={disconnectWallet}
       />
-      <Transfer openConnectWalletModal={openConnectWalletModal} />
+      <Switch>
+        <Route path="/" exact>
+          <Transfer openConnectWalletModal={openConnectWalletModal} />
+        </Route>
+        <Route path="/how-to-use" exact>
+          <HowToUse />
+        </Route>
+      </Switch>
     </div>
   );
 }
