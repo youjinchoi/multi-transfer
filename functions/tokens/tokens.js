@@ -10,14 +10,19 @@ const handler = async (event) => {
     const response = await axios.get(
       `https://api.covalenthq.com/v1/${chainId}/address/${account}/balances_v2/?&key=${KEY}`
     );
-    if (response?.status === 200) {
-      const result = response.data?.data?.items
-        ?.filter(
+    if (response && response.status === 200) {
+      const items =
+        response &&
+        response.data &&
+        response.data.data &&
+        response.data.data.items;
+      const result = (items || [])
+        .filter(
           (item) =>
-            item.supports_erc?.some((erc) => erc === "erc20") &&
+            (item.supports_erc || []).some((erc) => erc === "erc20") &&
             item.balance !== "0"
         )
-        ?.map((item) => ({
+        .map((item) => ({
           name: item.contract_name,
           symbol: item.contract_ticker_symbol,
           decimals: item.contract_decimals,
