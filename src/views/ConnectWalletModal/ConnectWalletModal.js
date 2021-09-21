@@ -8,8 +8,8 @@ import clsx from "clsx";
 
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
-import Metamask from "../../components/Logos/Metamask";
-import WalletConnect from "../../components/Logos/WalletConnect";
+import Metamask from "../../components/Svgs/Metamask";
+import WalletConnect from "../../components/Svgs/WalletConnect";
 import { wallet } from "../../configs";
 
 const useStyles = makeStyles(() => ({

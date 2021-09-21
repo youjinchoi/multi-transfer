@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, memo } from "react";
 
 import {
   Box,
@@ -8,18 +8,20 @@ import {
 } from "@material-ui/core";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
-import InputAdornment from "@material-ui/core/InputAdornment";
 import { makeStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "bignumber.js";
+import clsx from "clsx";
 import Web3Utils from "web3-utils";
 
 import { getContractABI } from "../../apis/bscscan";
-import search from "../../assets/search.svg";
+import { getTokens } from "../../apis/tokens";
 import Button from "../../components/Button";
 import { Dialog, DialogTitle } from "../../components/Dialog";
 import ErrorMessage from "../../components/ErrorMessage/ErrorMessage";
+import Search from "../../components/Svgs/Search";
 import TextField from "../../components/TextField";
 import { minimumCovacAmount } from "../../configs";
 import useCovacBalance from "../../hooks/useCovacBalance";
@@ -29,7 +31,7 @@ import {
   numberWithCommas,
 } from "../../utils";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   label: {
     color: "#FFFFFF",
     marginTop: 8,
@@ -45,9 +47,39 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "flex-start",
   },
   tokenAddress: {
-    background: "#F9FAFB",
-    border: "0.6px solid #E5E7EB",
-    borderRadius: 15,
+    "& label": {
+      top: 10,
+      left: 20,
+      color: "#00636C",
+      zIndex: 99,
+      fontSize: 18,
+      transform: "none",
+    },
+    "& label.Mui-disabled svg": {
+      color: "inherit",
+    },
+    "& label.Mui-focused": {
+      display: "none",
+    },
+    "& label.MuiFormLabel-filled": {
+      display: "none",
+    },
+    "& div.MuiInput-root": {
+      marginTop: 0,
+    },
+    "& input": {
+      padding: "0 !important",
+    },
+    "& .MuiAutocomplete-endAdornment": {
+      marginRight: 8,
+    },
+  },
+  tokenAddressIcon: {
+    marginRight: 8,
+    color: "inherit",
+  },
+  tokenAddressSearchOption: {
+    color: "#00636C",
   },
   button: {
     background: "#EC008C",
@@ -73,24 +105,42 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const useStylesInput = makeStyles((theme) => ({
-  root: {
-    padding: 10,
-    height: 50,
-    border: "0.6px solid #E5E7EB",
-    borderRadius: 15,
-    background: "#F9FAFB",
-  },
-  input: {
-    "&::placeholder": {
-      color: "#00636C",
-      opacity: 1,
-    },
-  },
-  disabled: {
-    color: "#00636C",
-  },
-}));
+const Option = memo(({ className, option }) => (
+  <Box
+    display="flex"
+    flexDirection="row"
+    alignItems="center"
+    className={className}
+  >
+    <Box mr={2}>{option.symbol}</Box>
+    {option.address}
+  </Box>
+));
+
+const filterOptions = (options, state) => {
+  const { inputValue } = state;
+  const inputValueLowerCase = inputValue?.toLowerCase();
+  return options.filter(
+    (option) =>
+      option?.symbol?.toLowerCase().indexOf(inputValueLowerCase) > -1 ||
+      option?.address?.toLowerCase().indexOf(inputValueLowerCase) > -1
+  );
+};
+
+const getTokenBalance = async (contract, account) => {
+  const decimals = await contract.decimals();
+  const balance = account ? await contract.balanceOf(account) : null;
+  let balanceBN = null;
+  let adjustedBalance = null;
+  if (balance) {
+    balanceBN = new BigNumber(balance.toString());
+    adjustedBalance = getBalanceStrWithDecimalsConsidered(
+      balance.toString(),
+      decimals
+    );
+  }
+  return { adjustedBalance, balanceBN };
+};
 
 function TokenInfo({
   openConnectWalletModal,
@@ -103,49 +153,40 @@ function TokenInfo({
   setShowBuyCovacMessage,
 }) {
   const classes = useStyles();
-  const inputClasses = useStylesInput();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTokenList, setIsLoadingTokenList] = useState(false);
+  const [isLoadingTokenContract, setIsLoadingTokenContract] = useState(false);
+  const [isNormalInput, setIsNormalInput] = useState(false);
   const [showConnectWalletMessage, setShowConnectWalletMessage] =
     useState(false);
+  const [tokens, setTokens] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   const isTokenInfoGrid = useMediaQuery("(min-width: 620px)");
 
   const { account, library, chainId } = useWeb3React();
   const { hasEnoughAmount: hasEnoughAmountOfCovac } = useCovacBalance();
 
-  const onTokenAddressClick = () => {
-    if (!account) {
-      setShowConnectWalletMessage(true);
-      return;
-    }
-    if (!hasEnoughAmountOfCovac) {
-      setShowBuyCovacMessage(true);
-      return;
-    }
-  };
-
   const hideConnectWalletMessage = () => setShowConnectWalletMessage(false);
 
-  const getTokenBalance = async (contract) => {
-    const decimals = await contract.decimals();
-    const balance = account ? await contract.balanceOf(account) : null;
-    let balanceBN = null;
-    let adjustedBalance = null;
-    if (balance) {
-      balanceBN = new BigNumber(balance.toString());
-      adjustedBalance = getBalanceStrWithDecimalsConsidered(
-        balance.toString(),
-        decimals
-      );
-    }
-    return { adjustedBalance, balanceBN };
-  };
-
   useEffect(() => {
+    if (account && chainId) {
+      setIsLoadingTokenList(true);
+      getTokens(chainId, account)
+        .then((response) => {
+          setTokens(response?.data);
+        })
+        .catch((e) => {
+          console.error(e);
+          setIsNormalInput(true);
+        })
+        .finally(() => setIsLoadingTokenList(false));
+    }
+
     if (account && tokenInfo?.address && tokenInfo?.contract) {
       const updateTokenBalance = async () => {
         const { adjustedBalance, balanceBN } = await getTokenBalance(
-          tokenInfo.contract
+          tokenInfo.contract,
+          account
         );
         setTokenInfo({ ...tokenInfo, balance: adjustedBalance, balanceBN });
       };
@@ -153,51 +194,6 @@ function TokenInfo({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
-
-  const onTokenAddressChange = async (e) => {
-    const value = e?.target?.value;
-    if (!value || !value.trim()) {
-      setTokenInfo(null);
-      return;
-    }
-    if (!Web3Utils.isAddress(value)) {
-      setTokenInfo({
-        isValid: false,
-        errorMessage: "Invalid token address. please check again",
-      });
-      return;
-    }
-    setIsLoading(true);
-    if (!tokenInfo?.isValid) {
-      setTokenInfo({ isValid: true, errorMessage: null });
-    }
-    const abi = await getContractABI(value, chainId);
-    if (!abi) {
-      setTokenInfo({
-        isValid: false,
-        errorMessage: "Invalid token address. please check again",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    const contract = getContract(value, abi, library, account);
-    const decimals = await contract.decimals();
-    const name = await contract.name();
-    const symbol = await contract.symbol();
-    const { adjustedBalance, balanceBN } = await getTokenBalance(contract);
-    setTokenInfo({
-      contract,
-      address: value,
-      name,
-      symbol,
-      decimals,
-      balance: adjustedBalance,
-      balanceBN,
-      isValid: true,
-    });
-    setIsLoading(false);
-  };
 
   useEffect(() => {
     if (!tokenInfo?.balanceBN || !totalAmountWithDecimalsBN) {
@@ -217,42 +213,215 @@ function TokenInfo({
 
   const hideBuyCovacMessage = () => setShowBuyCovacMessage(false);
 
+  const renderTokenAddressLabel = useCallback(
+    () => (
+      <Box display="flex" flexDirection="row" alignItems="center">
+        {isLoadingTokenList ? (
+          <Box
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            ml={1}
+            width={30}
+            height={30}
+          >
+            <CircularProgress size={20} className={classes.tokenAddressIcon} />
+          </Box>
+        ) : (
+          <Search
+            width={30}
+            height={30}
+            className={clsx(classes.tokenAddressIcon, {
+              [classes.searchIconError]: tokenInfo?.isValid === false,
+            })}
+          />
+        )}
+        {isNormalInput ? "Input your Token Address" : "Select your Token"}
+      </Box>
+    ),
+    [classes, tokenInfo, isLoadingTokenList, isNormalInput]
+  );
+
+  const renderAutocomplete = useCallback(() => {
+    const fetchTokenInfo = async (address, tokenOption) => {
+      if (!tokenInfo?.isValid) {
+        setTokenInfo({ isValid: true, errorMessage: null });
+      }
+      setIsLoadingTokenContract(true);
+      const abi = await getContractABI(address, chainId);
+      if (!abi) {
+        setTokenInfo({
+          isValid: false,
+          errorMessage: "Failed to get token abi. Please check again",
+        });
+        setIsLoadingTokenContract(false);
+        return;
+      }
+      const contract = getContract(address, abi, library, account);
+      if (!contract.decimals || !contract.name || !contract.symbol) {
+        setTokenInfo({
+          isValid: false,
+          errorMessage:
+            "This token is not following BEP-20 standard. Please check again",
+        });
+        setIsLoadingTokenContract(false);
+        return;
+      }
+
+      const decimals = await contract?.decimals();
+      const name = await contract?.name();
+      const symbol = await contract?.symbol();
+
+      const { adjustedBalance, balanceBN } = await getTokenBalance(
+        contract,
+        account
+      );
+      setTokenInfo({
+        contract,
+        address,
+        name,
+        symbol,
+        decimals,
+        balance: adjustedBalance,
+        balanceBN,
+        isValid: true,
+      });
+      if (tokenOption) {
+        setSelectedOption(tokenOption);
+      }
+      setIsLoadingTokenContract(false);
+    };
+
+    const onTokenAddressSelect = async (_, tokenOption) => {
+      if (!tokenOption) {
+        setTokenInfo(null);
+        setSelectedOption(null);
+        return;
+      }
+
+      await fetchTokenInfo(tokenOption?.address, tokenOption);
+    };
+
+    const onTokenAddressInputChange = async (_, value) => {
+      if (!isNormalInput) {
+        return;
+      }
+      if (!value || !value.trim()) {
+        setTokenInfo(null);
+        return;
+      }
+      if (!Web3Utils.isAddress(value)) {
+        setTokenInfo({
+          isValid: false,
+          errorMessage: "Invalid token address. please check again",
+        });
+        return;
+      }
+      if (value === tokenInfo?.address) {
+        return;
+      }
+      await fetchTokenInfo(value);
+    };
+
+    const getHelperText = () => {
+      if (tokenInfo?.isValid === false) {
+        return <ErrorMessage text={tokenInfo?.errorMessage} />;
+      } else if (isNormalInput && !tokenInfo?.address) {
+        return (
+          <ErrorMessage text="Failed to get token list. Please manually input token address" />
+        );
+      } else {
+        return null;
+      }
+    };
+
+    return (
+      <Autocomplete
+        freeSolo={isNormalInput}
+        loading={isLoadingTokenList}
+        value={isNormalInput ? tokenInfo?.address : selectedOption}
+        options={tokens || []}
+        filterOptions={filterOptions}
+        getOptionLabel={(input) => (isNormalInput ? input : input.address)}
+        onChange={onTokenAddressSelect}
+        onInputChange={onTokenAddressInputChange}
+        renderInput={(params) => {
+          return (
+            <TextField
+              InputProps={{
+                ...params?.InputProps,
+                inputRef: tokenAddressInputRef,
+              }}
+              error={tokenInfo?.isValid === false}
+              helperText={getHelperText()}
+              label={renderTokenAddressLabel()}
+              className={classes.tokenAddress}
+              {...params}
+            />
+          );
+        }}
+        renderOption={(option) => (
+          <Option
+            option={option}
+            className={classes.tokenAddressSearchOption}
+          />
+        )}
+      />
+    );
+  }, [
+    account,
+    chainId,
+    library,
+    setTokenInfo,
+    tokens,
+    classes,
+    renderTokenAddressLabel,
+    tokenInfo,
+    tokenAddressInputRef,
+    selectedOption,
+    isNormalInput,
+    isLoadingTokenList,
+  ]);
+
+  const onTokenAddressClick = () => {
+    if (!account) {
+      setShowConnectWalletMessage(true);
+      return;
+    }
+    if (!hasEnoughAmountOfCovac) {
+      setShowBuyCovacMessage(true);
+      return;
+    }
+  };
+
   return (
     <Box>
       <Box display="flex" justifyContent="center" m={1} flexDirection="column">
         <Box display="flex" justifyContent="flex-start">
           <Typography className={classes.label}>Token Address</Typography>
         </Box>
-        <TextField
-          onClick={onTokenAddressClick}
-          onChange={onTokenAddressChange}
-          disabled={!account || !hasEnoughAmountOfCovac || activeStep !== 0}
-          InputProps={{
-            inputRef: tokenAddressInputRef,
-            classes: inputClasses,
-            startAdornment: (
-              <InputAdornment position="start">
-                <img
-                  src={search}
-                  width={30}
-                  height={30}
-                  alt="search icon"
-                  className={
-                    tokenInfo?.isValid === false ? classes.searchIconError : ""
-                  }
-                />
-              </InputAdornment>
-            ),
-            disableUnderline: true,
-            placeholder: "Input your Token Address",
-          }}
-          error={tokenInfo?.isValid === false}
-          helperText={
-            tokenInfo?.isValid === false ? (
-              <ErrorMessage text={tokenInfo?.errorMessage} />
-            ) : null
-          }
-        />
+        {!account ||
+        !hasEnoughAmountOfCovac ||
+        (!tokens?.length && !isNormalInput) ||
+        activeStep !== 0 ? (
+          <TextField
+            onClick={onTokenAddressClick}
+            disabled={true}
+            InputProps={{
+              value: tokenInfo?.address ? tokenInfo.address : null,
+            }}
+            error={tokenInfo?.isValid === false}
+            helperText={
+              tokenInfo?.isValid === false ? (
+                <ErrorMessage text={tokenInfo?.errorMessage} />
+              ) : null
+            }
+            label={tokenInfo?.address ? null : renderTokenAddressLabel()}
+            className={classes.tokenAddress}
+          />
+        ) : (
+          renderAutocomplete()
+        )}
         {showConnectWalletMessage && (
           <Dialog
             onClose={hideConnectWalletMessage}
@@ -326,12 +495,12 @@ function TokenInfo({
           </Dialog>
         )}
       </Box>
-      {isLoading && (
+      {isLoadingTokenContract && (
         <Box m={1} mt={2} display="flex" justifyContent="center">
           <CircularProgress className={classes.loading} />
         </Box>
       )}
-      {!isLoading && !!tokenInfo && tokenInfo.isValid && (
+      {!isLoadingTokenContract && !!tokenInfo && tokenInfo.isValid && (
         <>
           <Box
             display={isTokenInfoGrid ? "flex" : "block"}

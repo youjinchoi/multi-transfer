@@ -24,3 +24,5 @@ yarn-error.log*
 
 .idea/
 .openzeppelin/
+# Local Netlify folder
+.netlify

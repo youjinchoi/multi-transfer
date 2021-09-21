@@ -5,7 +5,7 @@ import MaterialTextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    padding: "10px 20px",
+    padding: "10px 20px !important",
     height: 50,
     border: "0.6px solid #E5E7EB",
     borderRadius: 15,
