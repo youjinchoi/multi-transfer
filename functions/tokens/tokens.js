@@ -7,6 +7,9 @@ const handler = async (event) => {
   try {
     const account = event.queryStringParameters.account;
     const chainId = event.queryStringParameters.chainId;
+
+    console.info(`get token list for chainId ${chainId}, account ${account}`);
+
     const response = await axios.get(
       `https://api.covalenthq.com/v1/${chainId}/address/${account}/balances_v2/?&key=${KEY}`
     );
