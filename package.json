@@ -6,10 +6,7 @@
     "start": "node_modules/.bin/react-scripts start",
     "build": "node_modules/.bin/react-scripts build",
     "test": "node_modules/.bin/react-scripts test",
-    "eject": "node_modules/.bin/react-scripts eject",
-    "deploy:local": "truffle migrate --network local",
-    "deploy:testnet": "truffle migrate --network testnet",
-    "verify:testnet": "truffle run verify TransparentUpgradeableProxy --network testnet"
+    "eject": "node_modules/.bin/react-scripts eject"
   },
   "dependencies": {
     "@material-ui/core": "^4.11.4",
@@ -62,11 +59,8 @@
     ]
   },
   "devDependencies": {
-    "@openzeppelin/truffle-upgrades": "^1.7.1",
-    "@truffle/hdwallet-provider": "^1.4.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
-    "prettier": "^2.3.2",
-    "truffle-plugin-verify": "^0.5.9"
+    "prettier": "^2.3.2"
   }
 }
