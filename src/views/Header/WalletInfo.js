@@ -6,8 +6,8 @@ import MaterialButton from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
 import { useWeb3React } from "@web3-react/core";
 
-import covac_icon from "../../assets/covac_icon.png";
 import Button from "../../components/Button";
+import CovacCircle from "../../components/Svgs/CovacCircle";
 import useCovacBalance from "../../hooks/useCovacBalance";
 import { numberWithCommas } from "../../utils";
 
@@ -32,6 +32,9 @@ const useStyles = makeStyles(() => ({
   },
   covacLogoInWalletAddress: {
     marginLeft: -10,
+    marginRight: 8,
+    width: 40,
+    height: 40,
   },
   headerButtonCaption: {
     marginBottom: 6,
@@ -67,11 +70,7 @@ function WalletInfo({
             onClick={openWalletActionModal}
           >
             {isDesktop && (
-              <img
-                src={covac_icon}
-                alt="covac icon"
-                className={classes.covacLogoInWalletAddress}
-              />
+              <CovacCircle className={classes.covacLogoInWalletAddress} />
             )}
             {account}
           </MaterialButton>

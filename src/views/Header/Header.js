@@ -10,7 +10,7 @@ import { ExpandMore, ExpandLess } from "@material-ui/icons";
 import clsx from "clsx";
 import { Link } from "react-router-dom";
 
-import covac_log_white from "../../assets/covac_logo_white.png";
+import CovacLetter from "../../components/Svgs/CovacLetter";
 import usePageType, { PAGE_TYPE } from "../../hooks/usePageType";
 import Links from "./Links";
 import WalletInfo from "./WalletInfo";
@@ -101,7 +101,7 @@ function Header({ openConnectWalletModal, openWalletActionModal }) {
             rel="noreferrer"
             className={classes.covacLogo}
           >
-            <img src={covac_log_white} height={30} alt="covac logo" />
+            <CovacLetter height={30} />
           </a>
           <Button>
             <Link

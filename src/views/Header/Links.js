@@ -2,12 +2,12 @@ import React from "react";
 
 import { makeStyles } from "@material-ui/core/styles";
 
-import github_icon from "../../assets/github_icon.png";
-import medium_icon from "../../assets/medium_icon.svg";
-import tg_icon from "../../assets/tg_icon.png";
-import twitter_icon from "../../assets/twitter_icon.png";
-import website_icon from "../../assets/website_icon.png";
-import youtube_icon from "../../assets/youtube_icon.png";
+import Github from "../../components/Svgs/Github";
+import Medium from "../../components/Svgs/Medium";
+import Telegram from "../../components/Svgs/Telegram";
+import Twitter from "../../components/Svgs/Twitter";
+import Website from "../../components/Svgs/Website";
+import Youtube from "../../components/Svgs/Youtube";
 
 const useStyles = makeStyles(() => ({
   headerLink: {
@@ -16,6 +16,7 @@ const useStyles = makeStyles(() => ({
     marginRight: 4,
   },
   linkImage: {
+    color: "#fff",
     width: 40,
     height: 40,
   },
@@ -32,11 +33,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img
-          src={twitter_icon}
-          className={classes.linkImage}
-          alt="covac twitter"
-        />
+        <Twitter className={classes.linkImage} />
       </a>
       <a
         href="https://t.me/CovacCryptoChat"
@@ -44,7 +41,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img src={tg_icon} className={classes.linkImage} alt="covac telegram" />
+        <Telegram className={classes.linkImage} />
       </a>
       <a
         href="https://www.covac.io/"
@@ -52,11 +49,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img
-          src={website_icon}
-          className={classes.linkImage}
-          alt="covac website"
-        />
+        <Website className={classes.linkImage} />
       </a>
       <a
         href="https://github.com/CovacCrypto"
@@ -64,11 +57,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img
-          src={github_icon}
-          className={classes.linkImage}
-          alt="covac github"
-        />
+        <Github className={classes.linkImage} />
       </a>
       <a
         href="https://www.youtube.com/channel/UCF0n3StJRbrM1oSeaXBQ4GQ"
@@ -76,11 +65,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img
-          src={youtube_icon}
-          className={classes.linkImage}
-          alt="covac youtube"
-        />
+        <Youtube className={classes.linkImage} />
       </a>
       <a
         href="https://covac.medium.com/"
@@ -88,11 +73,7 @@ function Links() {
         rel="noreferrer"
         className={classes.headerLink}
       >
-        <img
-          src={medium_icon}
-          className={classes.linkImage}
-          alt="covac medium"
-        />
+        <Medium className={classes.linkImage} />
       </a>
     </>
   );

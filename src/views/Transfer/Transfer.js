@@ -13,7 +13,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { BigNumber } from "bignumber.js";
 import clsx from "clsx";
 
-import bsc from "../../assets/bsc.svg";
+import Bsc from "../../components/Svgs/Bsc";
 import CsvInfo from "./CsvInfo";
 import TokenInfo from "./TokenInfo";
 import TransactionInfo from "./TransactionInfo";
@@ -287,7 +287,7 @@ function Transfer({ openConnectWalletModal }) {
           alignItems="center"
           justifyContent="center"
         >
-          <img src={bsc} alt="bsc logo" className={classes.networkLogo} />
+          <Bsc className={classes.networkLogo} />
           <Typography>Binance Smart Chain</Typography>
         </Box>
       </Box>
